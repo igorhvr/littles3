@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+  <!-- find information about the format at:
+       http://maven.apache.org/reference/plugins/changes/ -->
+  
+  <properties>
+    <title>Changes</title>
+    <author email="jesse.peterson@pearson.com">Jesse Peterson</author>
+  </properties>
+  <body>
+    <release version="1.0.0" date="2007-05-22" description="Initial release">
+      <action dev="peteje" type="add">
+        Initial release. Adds a vCard module.
+      </action>
+    </release>
+    
+    <!-- sample of link to team track. Need to use team track to find the "issue" from the CHGxxx -->
+    <!--
+    <release version="0.0.1" date="example">
+      <action dev="peteje" type="fix" issue="113455">
+        Example of linking to CHG71754.
+      </action>
+    </release>
+    -->
+  </body>
+</document>

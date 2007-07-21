@@ -1,0 +1,237 @@
+                       --------------
+                           Usage
+                       --------------
+                       Jesse Peterson
+                       --------------
+                        May 21, 2007
+                       --------------
+
+Document History
+
+* {Release 1.0.0}
+
+  Initial release.
+
+Example feed
+
+  To start with, here is an example of an Atom feed with vCard information
+  provided in the Atom Entry. This is an example of what can be generated and
+  parsed with the IAM Rome vCard plugin module.
+  
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#"
+      xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+      xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Users</title>
+  <link rel="self" href="http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje" />
+  <id>http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full</id>
+  <updated>2007-05-17T15:00:36Z</updated>
+  <dc:creator>IAM ClearTrust Feed</dc:creator>
+  <dc:date>2007-05-17T15:00:36Z</dc:date>
+  <entry>
+    <title>User: Jesse Peterson</title>
+    <link rel="self" type="application/atom+xml" href="http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje" />
+    <category term="Admin" scheme="http://www.pearson.com/role" />
+    <category term="Division_Proj_Mgr" scheme="http://www.pearson.com/role" />
+    <category term="VA" scheme="http://www.pearson.com/organization" />
+    <category term="virginia" scheme="http://www.pearson.com/account" />
+    <author>
+      <name>IAM ClearTrust Feed</name>
+    </author>
+    <id>http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje</id>
+    <published>2007-05-17T15:00:36Z</published>
+    <content type="html">&lt;div class="vcard"&gt;&lt;span class="n" style="display:none"&gt;&lt;span class="family-name"&gt;Peterson&lt;/span&gt;&lt;span class="given-name"&gt;Jesse&lt;/span&gt;&lt;/span&gt;Name: &lt;span class="fn"&gt;Jesse Peterson&lt;/span&gt;&lt;br /&gt;Username: &lt;span class="uid"&gt;VA.peteje&lt;/span&gt;&lt;br /&gt;&lt;/div&gt;</content>
+    <dc:creator>IAM ClearTrust Feed</dc:creator>
+    <dc:date>2007-05-17T15:00:36Z</dc:date>
+    <vCard:FN>Jesse Peterson</vCard:FN>
+    <vCard:N rdf:parseType="Resource">
+      <vCard:Family>Peterson</vCard:Family>
+      <vCard:Given>Jesse</vCard:Given>
+    </vCard:N>
+    <vCard:UID>VA.peteje</vCard:UID>
+  </entry>
+</feed>
+---
+
+Generating a feed
+
+  Here is some pseudo code <(Well, a bit more than pseudo. It is actually from
+  the
+  {{{xref-test/com/pearson/pem/iam/rome/io/impl/VcardModuleGeneratorTest.html}VcardModuleGeneratorTest.java}}
+  unit test.)> showing how to use the Rome API to generate an Atom 1.0 feed
+  that includes the vCard information.
+
+---
+VcardModule vcardModule;
+List entries;
+SyndEntry entry;
+SyndContent content;
+SyndFeed feed = new SyndFeedImpl();
+Mock mockVcard = mock(Vcard.class);
+StringWriter out = new StringWriter();
+
+feed.setFeedType("atom_1.0");
+feed.setTitle("unit test"); // atom title
+feed.setPublishedDate(new Date()); // atom updated
+feed.setUri("feedid");
+feed.setAuthor("unit test feed author");
+
+entries = new ArrayList();
+
+entry = new SyndEntryImpl();
+entry.setUri("entryid");
+entry.setTitle("unit test entry");
+entry.setAuthor("unit test entry author");
+entry.setPublishedDate(new Date());
+
+content = new SyndContentImpl();
+content.setType(Content.TEXT);
+content.setValue("unit test content");
+
+mockVcard.expects(once()).method("getFn").will(returnValue("Test User"));
+mockVcard.expects(once()).method("getFamilyName").will(returnValue("User"));
+mockVcard.expects(once()).method("getGivenName").will(returnValue("Test"));
+mockVcard.expects(once()).method("getAdditionalName").will(returnValue(""));
+mockVcard.expects(once()).method("getHonorificPrefix").will(returnValue(""));
+mockVcard.expects(once()).method("getHonorificSuffix").will(returnValue(""));
+mockVcard.expects(once()).method("getNickname").will(returnValue(""));
+mockVcard.expects(once()).method("getUid").will(returnValue("userte"));
+
+vcardModule = new VcardModuleImpl((Vcard) mockVcard.proxy());
+
+List modules = entry.getModules();
+modules.add(vcardModule);
+
+entries.add(entry);
+feed.setEntries(entries);
+
+SyndFeedOutput output = new SyndFeedOutput();
+try {
+	output.output(feed, out);
+} catch (IOException e) {
+	e.printStackTrace();
+	fail("Unexpected exception");
+} catch (FeedException e) {
+	e.printStackTrace();
+	fail("Unexpected exception");
+}
+
+System.out.println("Generated feed...");
+System.out.println(out.toString());
+---
+
+  This will produce...
+  
+---
+Generated feed...
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:taxo="http://purl.org/rss/1.0/mo
+dules/taxonomy/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:v
+Card="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:sy="http://purl.org/rss/1.0/m
+odules/syndication/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>unit test</title>
+  <id>feedid</id>
+  <updated>2007-05-22T14:13:29Z</updated>
+  <dc:creator>IAM ClearTrust Feed</dc:creator>
+  <dc:date>2007-05-22T14:13:29Z</dc:date>
+  <entry>
+    <title>unit test entry</title>
+    <author>
+      <name>unit test entry author</name>
+    </author>
+    <id>entryid</id>
+    <published>2007-05-22T14:13:29Z</published>
+    <dc:date>2007-05-22T14:13:29Z</dc:date>
+    <vCard:FN>Test User</vCard:FN>
+    <vCard:N rdf:parseType="Resource">
+      <vCard:Family>User</vCard:Family>
+      <vCard:Given>Test</vCard:Given>
+    </vCard:N>
+    <vCard:UID>userte</vCard:UID>
+  </entry>
+</feed>
+---
+
+Parsing a feed
+
+  Below will be some pseudo code for parsing a feed. To start with, here is an
+  example of a feed that could be parsed.
+  
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#"
+      xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+      xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Users</title>
+  <link rel="self" href="http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje" />
+  <id>http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full</id>
+  <updated>2007-05-17T15:00:36Z</updated>
+  <dc:creator>IAM ClearTrust Feed</dc:creator>
+  <dc:date>2007-05-17T15:00:36Z</dc:date>
+  <entry>
+    <title>User: Jesse Peterson</title>
+    <link rel="self" type="application/atom+xml" href="http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje" />
+    <category term="Admin" scheme="http://www.pearson.com/role" />
+    <category term="Division_Proj_Mgr" scheme="http://www.pearson.com/role" />
+    <category term="VA" scheme="http://www.pearson.com/organization" />
+    <category term="virginia" scheme="http://www.pearson.com/account" />
+    <author>
+      <name>IAM ClearTrust Feed</name>
+    </author>
+    <id>http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje</id>
+    <published>2007-05-17T15:00:36Z</published>
+    <content type="html">&lt;div class="vcard"&gt;&lt;span class="n" style="display:none"&gt;&lt;span class="family-name"&gt;Peterson&lt;/span&gt;&lt;span class="given-name"&gt;Jesse&lt;/span&gt;&lt;/span&gt;Name: &lt;span class="fn"&gt;Jesse Peterson&lt;/span&gt;&lt;br /&gt;Username: &lt;span class="uid"&gt;VA.peteje&lt;/span&gt;&lt;br /&gt;&lt;/div&gt;</content>
+    <dc:creator>IAM ClearTrust Feed</dc:creator>
+    <dc:date>2007-05-17T15:00:36Z</dc:date>
+    <vCard:FN>Jesse Peterson</vCard:FN>
+    <vCard:N rdf:parseType="Resource">
+      <vCard:Family>Peterson</vCard:Family>
+      <vCard:Given>Jesse</vCard:Given>
+    </vCard:N>
+    <vCard:UID>VA.peteje</vCard:UID>
+  </entry>
+</feed>
+---
+
+  Given the above feed, either as a static file or dynamic via HTTP, for
+  instance, this is pseudo code to process it.
+  
+---
+SyndFeedInput input = new SyndFeedInput();
+SyndFeed feed = input.build(new XmlReader(new File("VA.peteje.xml").toURL()));
+List entries = feed.getEntries();
+SyndEntry entry = (SyndEntry) entries.get(0);
+List categories = entry.getCategories();
+
+for (Iterator iter = categories.iterator(); iter.hasNext();) {
+	SyndCategory category = (SyndCategory) iter.next();
+	if ("http://www.pearson.com/role".equals(category.getTaxonomyUri())) {
+		// found a role
+		String role = category.getName();
+	}
+}
+
+VcardModule vcardModule = (VcardModule) entry.getModule(VcardModule.URI);
+
+vcardModule.getFN();
+VcardN n = vcardModule.getN();
+n.getGivenName();
+---
+
+  This pseudo code will find the roles:
+  
+  * Admin
+  
+  * Division_Proj_Mgr
+  
+  []
+  
+  The method <<<vcardModule.getFN()>>> would return "Jesse Peterson". The
+  method <<<n.getGivenName()>>> would return "Jesse".

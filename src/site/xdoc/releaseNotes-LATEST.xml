@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+  <!-- find information about the format at:
+       http://maven.apache.org/reference/plugins/xdoc/ -->
+  <properties>
+    <title>Release Notes</title>
+    <author email="jesse.peterson@pearson.com">Jesse Peterson</author>
+  </properties>
+  <body>
+  <a name="1.0.0" />
+  <section name="IAM Rome API 1.0.0 Released">
+    <p>
+      IAM Rome API 1.0.0 has been released.
+    </p>
+    <p>
+      <a href="download.html">Download</a>
+    </p>
+    <p>
+      To see a list of changes to the IAM Rome API,
+      please refer to the
+      <a href="changes-report.html#1.0.0">Changes Report</a>, or the brief
+      summary below:
+    </p>
+    <ul>
+      <li>
+        Initial release.
+      </li>
+    </ul>
+    <p>
+      If you have any questions, please consult:
+    </p>
+    <ul>
+      <li>the FAQ: <a href="faq.html">FAQ</a></li>
+      <li>the developers: <a href="team-list.html">Team List</a></li>
+    </ul>
+  </section>
+
+  </body>
+</document>

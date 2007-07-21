@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<faqs title="About the IAM Rome customizations">
+
+  <part id="Rome">
+    <faq>
+      <question>What is Rome?</question>
+      <answer>
+        <p>
+From the <a href="https://rome.dev.java.net/">Rome site</a>: "ROME is a set
+of open source Java tools for parsing, generating and publishing RSS and Atom
+feeds." It is a Java API that helps convert RSS or Atom feeds to a Java API.
+It also lets you create an RSS or Atom feed in a standard way: you create the
+feed in a standard way, and then format the feed for RSS or Atom.
+        </p>
+      </answer>
+    </faq>
+  </part>
+  
+  <part id="Specification">
+    <faq>
+      <question>What is vCard?</question>
+      <answer>
+        <p>
+The <a href="http://www.imc.org/pdi/">primary site</a> says that vCard is
+"Your Electronic Business Card". It basically describes a way to format typical
+contact information. vCard is relatively old. The specification,
+<a href="http://www.ietf.org/rfc/rfc2426.txt">rfc 2426</a>, was published in
+September 1998. Since publication, there have been new specifications for
+encoding vCard data as <a href="http://www.w3.org/TR/vcard-rdf">XML</a> and a
+<a href="http://microformats.org/wiki/hcard">microformat</a>.
+        </p>
+      </answer>
+    </faq>
+    <faq>
+      <question>What is the vCard module?</question>
+      <answer>
+        <p>
+The vCard module is an object representation of vCard type data that can be
+added to a feed or read from a feed using the vCard plugins provided by this
+API. See the <a href="configuration.html">Configuration</a> document for more
+information on configuring the vCard support. See the
+<a href="usage.html">Usage</a> document for more information and example of
+using the vCard module and other API objects.
+        </p>
+      </answer>
+    </faq>
+  </part>
+</faqs>

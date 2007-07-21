@@ -1,0 +1,49 @@
+                       --------------
+                       Configuration
+                       --------------
+                       Jesse Peterson
+                       --------------
+                        May 21, 2007
+                       --------------
+
+Document History
+
+* {Release 1.0.0}
+
+  Initial release.
+  
+{Rome plugin definition file}
+
+  The IAM Rome API provides a vCard Rome plugin module. Rome is based on a
+  modular plugin architecture which allows extensibility. Plugins are
+  configured in the file <<<rome.properties>>>. This file is loaded from the
+  CLASSPATH. Detailed information about the Rome plugin configuration can be
+  found {{{http://wiki.java.net/bin/view/Javawsxml/Rome05Plugins}here}}. If
+  you plan to use the IAM Rome API vCard plugin modules, you must ensure that
+  they are configured in the plugin definition file to make the functionality
+  available.
+  
+* {vCard Modules}
+
+  The IAM Rome API provides a vCard module generator and parser:
+  <<<VcardModuleGenerator>>> and <<<VcardModuleParser>>> respectively. These
+  are defined in the <<<rome.properties>>> as follows (from
+  {{{rome.properties}rome.properties}} example):
+  
++------
+# Parsers for Atom 1.0 feed modules
+#
+atom_1.0.feed.ModuleParser.classes=com.pearson.pem.iam.rome.io.impl.VcardModuleParser
+
+# Parsers for Atom 1.0 item modules
+#
+atom_1.0.item.ModuleParser.classes=com.pearson.pem.iam.rome.io.impl.VcardModuleParser
+
+# Generators for Atom 1.0 feed modules
+#
+atom_1.0.feed.ModuleGenerator.classes=com.pearson.pem.iam.rome.io.impl.VcardModuleGenerator
+
+# Generators for Atom 1.0 entry modules
+#
+atom_1.0.item.ModuleGenerator.classes=com.pearson.pem.iam.rome.io.impl.VcardModuleGenerator
++------

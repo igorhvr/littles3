@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<document>
+  <!-- find information about the format at:
+    http://maven.apache.org/reference/plugins/xdoc/ -->
+  <properties>
+    <title>About</title>
+    <author email="jesse.peterson@pearson.com">Jesse Peterson</author>
+  </properties>
+  <body>
+    <section name="Introduction">
+      <p>
+        IAM Rome API provides customization of the
+        <a href="https://rome.dev.java.net/">Rome</a> API by providing a
+        <a href="http://www.w3.org/TR/vcard-rdf">vCard</a> module. The vCard
+        module is used to represent user information for "I" in Identity &amp;
+        Access Management (IAM).
+      </p>
+    </section>
+  </body>
+</document>

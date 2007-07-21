@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="iamRome">
+  <bannerLeft>
+    <name>iamRome</name>
+    <src>http://www.pearsonedmeasurement.com/images/pemlogo.gif</src>
+  </bannerLeft>
+  <bannerRight>
+    <name>iamRome</name>
+    <href>http://goby.ic.ncs.com/site/iamRome/</href>
+  </bannerRight>
+  <body>
+    <links>
+      <item name="Maven" href="http://maven.apache.org/" />
+      <item name="IAM Home" href="http://icpqua01.ic.ncs.com/twiki/bin/view/FS/IdentityAndAccessManagement" />
+      <item name="IAM Components Project Site Listing" href="http://icpqua01.ic.ncs.com/twiki/bin/view/FS/IAMComponentMenu" />
+    </links>
+    <menu name="Getting Started">
+      <item name="Configuration" href="/configuration.html" />
+      <item name="Downloading" href="/download.html" />
+      <item name="FAQ" href="/faq.html" />
+      <item name="Release Notes" href="/releaseNotes-LATEST.html" />
+      <item name="Usage" href="/usage.html" />
+    </menu>
+
+    ${reports}
+  </body>
+</project>

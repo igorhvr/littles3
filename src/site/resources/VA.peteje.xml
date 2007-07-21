@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title>Users</title>
+  <link rel="self" href="http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje" />
+  <id>http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full</id>
+  <updated>2007-05-17T15:00:36Z</updated>
+  <dc:creator>IAM ClearTrust Feed</dc:creator>
+  <dc:date>2007-05-17T15:00:36Z</dc:date>
+  <entry>
+    <title>User: Jesse Peterson</title>
+    <link rel="self" type="application/atom+xml" href="http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje" />
+    <category term="Admin" scheme="http://www.pearson.com/role" />
+    <category term="Division_Proj_Mgr" scheme="http://www.pearson.com/role" />
+    <category term="VA" scheme="http://www.pearson.com/organization" />
+    <category term="virginia" scheme="http://www.pearson.com/account" />
+    <author>
+      <name>IAM ClearTrust Feed</name>
+    </author>
+    <id>http://peteje.ncsp.peroot.com:8080/iamClearTrustFeed-1.0.0-SNAPSHOT/feeds/users/full/VA.peteje</id>
+    <published>2007-05-17T15:00:36Z</published>
+    <content type="html">&lt;div class="vcard"&gt;&lt;span class="n" style="display:none"&gt;&lt;span class="family-name"&gt;Peterson&lt;/span&gt;&lt;span class="given-name"&gt;Jesse&lt;/span&gt;&lt;/span&gt;Name: &lt;span class="fn"&gt;Jesse Peterson&lt;/span&gt;&lt;br /&gt;Username: &lt;span class="uid"&gt;VA.peteje&lt;/span&gt;&lt;br /&gt;&lt;/div&gt;</content>
+    <dc:creator>IAM ClearTrust Feed</dc:creator>
+    <dc:date>2007-05-17T15:00:36Z</dc:date>
+    <vCard:FN>Jesse Peterson</vCard:FN>
+    <vCard:N rdf:parseType="Resource">
+      <vCard:Family>Peterson</vCard:Family>
+      <vCard:Given>Jesse</vCard:Given>
+    </vCard:N>
+    <vCard:UID>VA.peteje</vCard:UID>
+  </entry>
+</feed>
+

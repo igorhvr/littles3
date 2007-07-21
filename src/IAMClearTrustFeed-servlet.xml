@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING/DTD BEAN/EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!--
+  - Application context definition.
+-->
+<beans>
+  <!--  ====== RESOURCE DEFINITIONS ====== -->
+
+  <!-- Doesn't work yet on my Tomcat install -->
+  <!--
+  <bean id="iamIdentityServiceDataSource" class="org.springframework.jndi.JndiObjectFactoryBean">
+    <property name="jndiName" value="java:comp/env/jdbc/iamIdentityService"/>
+  </bean>
+  -->
+  
+  <bean id="iamIdentityServiceDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/>
+    <property name="url" value="jdbc:oracle:thin:@castle.ic.ncs.com:1521:orcl"/>
+    <property name="username" value="IAM_OWNER"/>
+    <property name="password" value="iam_owner"/>
+  </bean>
+
+  <!--  ====== BUSINESS OBJECT DEFINITIONS ====== -->
+
+  <bean id="tagDao"
+        class="com.pearson.pem.iam.identityservice.dao.jdbc.OracleTagDao"
+        lazy-init="true">
+    <property name="dataSource" ref="iamIdentityServiceDataSource"/>
+  </bean>
+  
+  <bean id="userDao"
+        class="com.pearson.pem.iam.identityservice.dao.jdbc.OracleUserDao"
+        lazy-init="true">
+    <property name="dataSource" ref="iamIdentityServiceDataSource"/>
+  </bean>
+
+  <bean id="userTagDao"
+        class="com.pearson.pem.iam.identityservice.dao.jdbc.OracleUserTagDao"
+        lazy-init="true">
+    <property name="dataSource" ref="iamIdentityServiceDataSource"/>
+  </bean>
+
+  <bean id="tagService"
+        class="com.pearson.pem.iam.identityservice.service.impl.TagServiceImpl"
+        lazy-init="true">
+    <property name="tagDao" ref="tagDao"/>
+    <property name="userTagDao" ref="userTagDao"/>
+  </bean>
+
+  <bean id="userService"
+        class="com.pearson.pem.iam.identityservice.service.impl.UserServiceImpl"
+        lazy-init="true">
+    <property name="userDao" ref="userDao"/>
+  </bean>
+</beans>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<document>
+  <!-- find information about the format at:
+       http://maven.apache.org/reference/plugins/xdoc/ -->
+  <properties>
+    <title>IAM Rome API</title>
+    <author email="jesse.peterson@pearson.com">Jesse Peterson</author>
+  </properties>
+  <body>
+    <section name="Latest Stable Release">
+      <subsection name="Download IAM Rome API 1.0.0">
+<p>
+IAM Rome API is distributed as a JAR file.
+You can find both this and older releases
+<a href="http://storm.ic.ncs.com/maven2/com/pearson/pem/iamRome/">here</a>.
+</p>
+<p>
+Please read the <a href="releaseNotes-LATEST.html">Release Notes</a>.
+</p>
+<p>
+The current release is 1.0.0. Below is the link to the latest release format.
+</p>
+<ul>
+  <li>
+    <a href="http://storm.ic.ncs.com/maven2/com/pearson/pem/iamRome/1.0.0/iamRome-1.0.0.jar">JAR file</a>
+  </li>
+</ul>
+      </subsection>
+    </section>
+  </body>
+</document>
