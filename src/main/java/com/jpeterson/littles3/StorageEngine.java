@@ -287,6 +287,7 @@ public class StorageEngine extends FrameworkServlet {
 	 * @throws ServletException
 	 *             if the request for the GET could not be handled
 	 */
+	@SuppressWarnings("unchecked")
 	public void processHeadGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		if (logger.isDebugEnabled()) {

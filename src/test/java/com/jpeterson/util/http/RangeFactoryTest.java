@@ -46,6 +46,7 @@ public class RangeFactoryTest extends TestCase {
 		return new TestSuite(RangeFactoryTest.class);
 	}
 
+	@SuppressWarnings("unchecked")
 	public void test_basic() {
 		String value;
 		RangeSet rangeSet;

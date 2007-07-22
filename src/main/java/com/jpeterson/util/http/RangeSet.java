@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+@SuppressWarnings("unchecked")
 public class RangeSet extends AbstractSet implements Rangeable {
 
 	private ArrayList ranges = new ArrayList();
@@ -48,6 +49,7 @@ public class RangeSet extends AbstractSet implements Rangeable {
 	 * @throws IllegalStateException
 	 *             Thrown if the range start is larger than the absolute length
 	 */
+	@SuppressWarnings("unchecked")
 	public void resolve(long absoluteLength) {
 		Range range;
 		boolean error = true;
@@ -108,6 +110,7 @@ public class RangeSet extends AbstractSet implements Rangeable {
 		return false;
 	}
 
+	@SuppressWarnings("unchecked")
 	public boolean add(Object o) {
 		Range providedRange = (Range) o;
 		Range r, testRange;
