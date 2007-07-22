@@ -37,9 +37,7 @@ public class FileS3Object extends S3Object {
 	 *            The key bucket.
 	 * @param storageUrl
 	 *            The URL used to store the object data. This must be a URL with
-	 *            the <code>file</code> protocol. If the
-	 *            <code>storageUrl</code> is <code>null</code>, a new
-	 *            location will be allocated.
+	 *            the <code>file</code> protocol.
 	 * @throws IllegalArgumentException
 	 *             Thrown if the <code>storageUrl</code> is not a
 	 *             <code>file</code> protocol.

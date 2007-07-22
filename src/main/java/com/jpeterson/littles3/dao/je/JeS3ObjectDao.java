@@ -234,8 +234,8 @@ public class JeS3ObjectDao implements S3ObjectDao {
 		DatabaseEntry theKey;
 		DatabaseEntry theData;
 		boolean truncated = false;
-		List contents = new ArrayList();
-		List commonPrefixes = new ArrayList();
+		List<S3Object> contents = new ArrayList<S3Object>();
+		List<String> commonPrefixes = new ArrayList<String>();
 		int results = 0;
 		String commonPrefix = null;
 		String currentPrefix;

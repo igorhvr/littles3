@@ -22,6 +22,7 @@ import java.util.List;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
 
+import com.jpeterson.littles3.bo.Bucket;
 import com.jpeterson.littles3.bo.S3Object;
 import com.jpeterson.littles3.dao.S3ObjectDao;
 
@@ -81,7 +82,7 @@ public interface StorageService {
 	 * @throws IOException
 	 *             Unable to find a user's buckets.
 	 */
-	public List findBuckets(String username) throws IOException;
+	public List<Bucket> findBuckets(String username) throws IOException;
 
 	public String listKeys(String bucket, String prefix, String marker,
 			String delimiter, int maxKeys) throws DataAccessException;

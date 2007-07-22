@@ -129,7 +129,7 @@ public class FileStorageServiceImpl implements StorageService {
 		}
 	}
 
-	public List findBuckets(String username) throws IOException {
+	public List<Bucket> findBuckets(String username) throws IOException {
 		StringBuffer buffer = new StringBuffer();
 		Configuration configuration = getConfiguration();
 		String storageLocation = configuration
@@ -154,13 +154,13 @@ public class FileStorageServiceImpl implements StorageService {
 		File dir = new File(buffer.toString());
 
 		if (!dir.isDirectory()) {
-			return new ArrayList();
+			return new ArrayList<Bucket>();
 		}
 
 		// TODO: apply username filter
 
 		File[] bucketFiles = dir.listFiles();
-		ArrayList buckets = new ArrayList();
+		ArrayList<Bucket> buckets = new ArrayList<Bucket>();
 
 		for (int i = 0; i < bucketFiles.length; i++) {
 			Bucket bucket = new Bucket();
