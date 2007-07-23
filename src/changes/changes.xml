@@ -5,12 +5,12 @@
   
   <properties>
     <title>Changes</title>
-    <author email="jesse.peterson@pearson.com">Jesse Peterson</author>
+    <author email="jesse@jpeterson.com">Jesse Peterson</author>
   </properties>
   <body>
-    <release version="1.0.0" date="2007-05-22" description="Initial release">
+    <release version="1.0.0" date="upcoming" description="Initial release">
       <action dev="peteje" type="add">
-        Initial release. Adds a vCard module.
+        Initial release. Implement a storage engine that provides the Amazon S3 API.
       </action>
     </release>
     

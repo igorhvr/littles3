@@ -17,8 +17,11 @@
 package com.jpeterson.littles3.bo;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -123,6 +126,110 @@ public class FileS3ObjectTest extends TestCase {
 
 			assertEquals("Unexpected value", file.lastModified(), s3Object
 					.getLastModified());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+			return;
+		}
+	}
+
+	/**
+	 * Test the delete data method.
+	 */
+	public void test_deleteData() {
+		File file;
+		FileS3Object s3Object;
+
+		try {
+			file = File.createTempFile("unitTest", null);
+
+			file.deleteOnExit();
+
+			FileOutputStream out = new FileOutputStream(file);
+
+			out.write("12345".getBytes());
+
+			out.close();
+
+			s3Object = new FileS3Object("bucket", "key", file.toURL());
+
+			assertTrue("File should exits", file.exists());
+
+			assertTrue("Should be able to delete", s3Object.deleteData());
+
+			assertFalse("File should not exist", file.exists());
+
+			assertFalse("Should already be deleted", s3Object.deleteData());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+			return;
+		}
+	}
+
+	/**
+	 * Test the input stream method.
+	 */
+	public void test_inputStream() {
+		File file;
+		FileS3Object s3Object;
+
+		try {
+			file = File.createTempFile("unitTest", null);
+
+			file.deleteOnExit();
+
+			FileOutputStream out = new FileOutputStream(file);
+
+			out.write("12345".getBytes());
+
+			out.close();
+
+			s3Object = new FileS3Object("bucket", "key", file.toURL());
+
+			InputStream in = s3Object.getInputStream();
+
+			assertEquals("Unexpected value", '1', in.read());
+			assertEquals("Unexpected value", '2', in.read());
+			assertEquals("Unexpected value", '3', in.read());
+			assertEquals("Unexpected value", '4', in.read());
+			assertEquals("Unexpected value", '5', in.read());
+			assertEquals("Unexpected value", -1, in.read());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+			return;
+		}
+	}
+
+	/**
+	 * Test the output stream method.
+	 */
+	public void test_outputStream() {
+		File file;
+		FileS3Object s3Object;
+
+		try {
+			file = File.createTempFile("unitTest", null);
+
+			file.deleteOnExit();
+
+			s3Object = new FileS3Object("bucket", "key", file.toURL());
+
+			OutputStream out = s3Object.getOutputStream();
+
+			out.write("12345".getBytes());
+
+			out.close();
+
+			InputStream in = new FileInputStream(file);
+
+			assertEquals("Unexpected value", '1', in.read());
+			assertEquals("Unexpected value", '2', in.read());
+			assertEquals("Unexpected value", '3', in.read());
+			assertEquals("Unexpected value", '4', in.read());
+			assertEquals("Unexpected value", '5', in.read());
+			assertEquals("Unexpected value", -1, in.read());
 		} catch (IOException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
