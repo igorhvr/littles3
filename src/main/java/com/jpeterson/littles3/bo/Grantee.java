@@ -16,38 +16,14 @@
 
 package com.jpeterson.littles3.bo;
 
-import java.util.Date;
+import java.security.Principal;
 
 /**
- * Initial simple bucket implementation.
+ * This is a marker interface that represents a grantee for an Access Control
+ * List.
  * 
  * @author Jesse Peterson
  */
-public class Bucket extends Resource {
-	private String name;
+public interface Grantee extends Principal {
 
-	private Date created;
-
-	/**
-	 * Empty constructor.
-	 */
-	public Bucket() {
-		super();
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Date getCreated() {
-		return created;
-	}
-
-	public void setCreated(Date created) {
-		this.created = created;
-	}
 }

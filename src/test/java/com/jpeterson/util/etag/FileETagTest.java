@@ -57,6 +57,22 @@ public class FileETagTest extends TestCase {
 	}
 
 	/**
+	 * Test flags property access methods.
+	 */
+	public void test_flags() {
+		FileETag etag;
+		int flags = FileETag.FLAG_CONTENT | FileETag.FLAG_MTIME
+				| FileETag.FLAG_SIZE;
+
+		etag = new FileETag();
+
+		assertEquals("Unexpected value", FileETag.DEFAULT_FLAGS, etag
+				.getFlags());
+		etag.setFlags(flags);
+		assertEquals("Unexpected value", flags, etag.getFlags());
+	}
+
+	/**
 	 * Test the calculate method when using file last modified, file size, and
 	 * file content values.
 	 */

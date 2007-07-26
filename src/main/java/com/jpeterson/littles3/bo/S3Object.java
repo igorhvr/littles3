@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
  * 
  * @author Jesse Peterson
  */
-public abstract class S3Object {
+public abstract class S3Object extends Resource {
 	/**
 	 * Default content type per the Amazon S3 Developer Guide (API Version
 	 * 2006-03-01).
@@ -60,6 +60,7 @@ public abstract class S3Object {
 	 * constructor.
 	 */
 	public S3Object() {
+		super();
 		logger = LogFactory.getLog(this.getClass());
 	}
 
