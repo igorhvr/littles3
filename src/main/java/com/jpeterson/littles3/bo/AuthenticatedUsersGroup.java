@@ -85,13 +85,12 @@ public class AuthenticatedUsersGroup extends GroupBase {
 	 * 
 	 * @param member
 	 *            the principal whose membership is to be checked.
-	 * @return <code>true</code> if member is a <code>CanonicalUser</code>,
-	 *         which imlies an authenticated user; <code>false</code>
-	 *         otherwise.
+	 * @return <code>true</code> if member is an authenticated user;
+	 *         <code>false</code> otherwise.
 	 */
 	public boolean isMember(Principal member) {
 		if (member instanceof CanonicalUser) {
-			return true;
+			return !((CanonicalUser) member).isAnonymous();
 		}
 
 		return false;

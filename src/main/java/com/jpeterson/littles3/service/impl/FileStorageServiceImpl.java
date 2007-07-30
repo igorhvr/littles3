@@ -28,8 +28,11 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.dao.DataAccessException;
 
 import com.javaexchange.RandomGUID;
+import com.jpeterson.littles3.bo.Acp;
 import com.jpeterson.littles3.bo.Bucket;
+import com.jpeterson.littles3.bo.CanonicalUser;
 import com.jpeterson.littles3.bo.FileS3Object;
+import com.jpeterson.littles3.bo.ResourcePermission;
 import com.jpeterson.littles3.bo.S3Object;
 import com.jpeterson.littles3.dao.S3ObjectDao;
 import com.jpeterson.littles3.service.BucketAlreadyExistsException;
@@ -56,10 +59,12 @@ public class FileStorageServiceImpl implements StorageService {
 		logger = LogFactory.getLog(this.getClass());
 	}
 
-	public S3Object createS3Object(String bucket, String key)
-			throws IOException {
+	public S3Object createS3Object(String bucket, String key,
+			CanonicalUser owner) throws IOException {
 		String guid;
 		File storageFile;
+		Acp acp;
+		S3Object s3Object;
 
 		logger.debug("Creating S3Object for bucket[" + bucket + "] + key["
 				+ key + "]");
@@ -77,7 +82,12 @@ public class FileStorageServiceImpl implements StorageService {
 			storageFile = new File(bucketPath + guid.substring(0, 2), guid);
 		} while (storageFile.exists());
 
-		return new FileS3Object(bucket, key, storageFile.toURI().toURL());
+		acp = new Acp();
+		acp.setOwner(owner);
+
+		s3Object = new FileS3Object(bucket, key, storageFile.toURI().toURL());
+		s3Object.setAcp(acp);
+		return s3Object;
 	}
 
 	public S3Object load(String bucket, String key) throws DataAccessException {
@@ -90,6 +100,14 @@ public class FileStorageServiceImpl implements StorageService {
 	}
 
 	public void store(S3Object s3Object) throws DataAccessException {
+		Acp acp;
+
+		acp = s3Object.getAcp();
+		if (acp.size() == 0) {
+			// add a default grant
+			acp.grant(acp.getOwner(), ResourcePermission.ACTION_FULL_CONTROL);
+		}
+
 		s3ObjectDao.storeS3Object(s3Object);
 	}
 

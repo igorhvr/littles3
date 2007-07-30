@@ -77,7 +77,7 @@ public class ResourceTest extends TestCase {
 		foo = new CanonicalUser("foo");
 		bar = new CanonicalUser("bar");
 		baz = new CanonicalUser("baz");
-		anonymous = AnonymousUser.getInstance();
+		anonymous = new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
 
 		acp.grant(id, ResourcePermission.ACTION_FULL_CONTROL);
 		acp.grant(foo, ResourcePermission.ACTION_WRITE);
@@ -129,7 +129,7 @@ public class ResourceTest extends TestCase {
 		foo = new CanonicalUser("foo");
 		bar = new CanonicalUser("bar");
 		baz = new CanonicalUser("baz");
-		anonymous = AnonymousUser.getInstance();
+		anonymous = new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
 
 		acp.grant(id, ResourcePermission.ACTION_FULL_CONTROL);
 		acp.grant(foo, ResourcePermission.ACTION_WRITE);

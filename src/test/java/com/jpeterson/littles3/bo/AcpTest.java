@@ -17,6 +17,7 @@
 package com.jpeterson.littles3.bo;
 
 import java.security.AccessControlException;
+import java.util.Enumeration;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -61,7 +62,7 @@ public class AcpTest extends TestCase {
 		foo = new CanonicalUser("foo");
 		bar = new CanonicalUser("bar");
 		baz = new CanonicalUser("baz");
-		anonymous = AnonymousUser.getInstance();
+		anonymous = new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
 
 		acp.grant(id, ResourcePermission.ACTION_FULL_CONTROL);
 		acp.grant(foo, ResourcePermission.ACTION_WRITE);
@@ -167,6 +168,29 @@ public class AcpTest extends TestCase {
 	}
 
 	/**
+	 * Test the ability to get the grants.
+	 */
+	public void test_grants() {
+		Acp acp = new Acp();
+		ResourcePermission grant;
+
+		acp.grant(new CanonicalUser("foo"), "FULL_CONTROL");
+		acp.grant(new CanonicalUser("bar"), "WRITE");
+		acp.grant(AuthenticatedUsersGroup.getInstance(), "READ_ACP");
+
+		Enumeration grants = acp.grants();
+
+		assertTrue("Should be more grants", grants.hasMoreElements());
+		grant = (ResourcePermission) grants.nextElement();
+		grant.getGrantee();
+		assertTrue("Should be more grants", grants.hasMoreElements());
+		grants.nextElement();
+		assertTrue("Should be more grants", grants.hasMoreElements());
+		grants.nextElement();
+		assertFalse("Should not be more grants", grants.hasMoreElements());
+	}
+
+	/**
 	 * Test the size property.
 	 */
 	public void test_size() {
@@ -212,7 +236,7 @@ public class AcpTest extends TestCase {
 		foo = new CanonicalUser("foo");
 		bar = new CanonicalUser("bar");
 		baz = new CanonicalUser("baz");
-		anonymous = AnonymousUser.getInstance();
+		anonymous = new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
 
 		acp.grant(id, ResourcePermission.ACTION_FULL_CONTROL);
 		acp.grant(foo, ResourcePermission.ACTION_WRITE);
@@ -253,7 +277,7 @@ public class AcpTest extends TestCase {
 		foo = new CanonicalUser("foo");
 		bar = new CanonicalUser("bar");
 		baz = new CanonicalUser("baz");
-		anonymous = AnonymousUser.getInstance();
+		anonymous = new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
 
 		acp.setOwner(id);
 
@@ -293,7 +317,7 @@ public class AcpTest extends TestCase {
 		foo = new CanonicalUser("foo");
 		bar = new CanonicalUser("bar");
 		baz = new CanonicalUser("baz");
-		anonymous = AnonymousUser.getInstance();
+		anonymous = new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
 
 		acp.grant(id, ResourcePermission.ACTION_FULL_CONTROL);
 		acp.grant(foo, ResourcePermission.ACTION_WRITE);
@@ -344,7 +368,7 @@ public class AcpTest extends TestCase {
 		foo = new CanonicalUser("foo");
 		bar = new CanonicalUser("bar");
 		baz = new CanonicalUser("baz");
-		anonymous = AnonymousUser.getInstance();
+		anonymous = new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
 
 		acp.setOwner(id);
 

@@ -18,8 +18,11 @@ package com.jpeterson.littles3;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.security.Principal;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.jpeterson.littles3.bo.CanonicalUser;
 
 /**
  * Data structure for parsing an S3 object request.
@@ -33,73 +36,12 @@ public class S3ObjectRequest {
 
 	private String key;
 
+	private CanonicalUser requestor;
+
 	/**
 	 * Empty constructor.
 	 */
 	protected S3ObjectRequest() {
-	}
-
-	/**
-	 * Create an <code>S3Object</code> based on the request.
-	 * 
-	 * @param req
-	 *            The original request.
-	 * @return An object initialized from the request.
-	 * @throws IllegalArgumentException
-	 *             Invalid request.
-	 * @deprecated Use {@link #create(HttpServletRequest, String)}
-	 */
-	public static S3ObjectRequest create(HttpServletRequest req)
-			throws IllegalArgumentException {
-		S3ObjectRequest o = new S3ObjectRequest();
-		String pathInfo = req.getPathInfo();
-		int pathInfoLength;
-		String requestURL;
-		String serviceEndpoint;
-		String bucket = null;
-		String key = null;
-
-		try {
-			requestURL = URLDecoder.decode(req.getRequestURL().toString(),
-					"UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// should never happen
-			e.printStackTrace();
-			IllegalArgumentException t = new IllegalArgumentException(
-					"Unsupport encoding: UTF-8");
-			t.initCause(e);
-			throw t;
-		}
-
-		if (!requestURL.endsWith(pathInfo)) {
-			String m = "requestURL [" + requestURL
-					+ "] does not end with pathInfo [" + pathInfo + "]";
-			throw new IllegalArgumentException(m);
-		}
-
-		pathInfoLength = pathInfo.length();
-
-		serviceEndpoint = requestURL.substring(0, requestURL.length()
-				- pathInfoLength);
-
-		if (pathInfoLength > 1) {
-			int index = pathInfo.indexOf('/', 1);
-			if (index > -1) {
-				bucket = pathInfo.substring(1, index);
-
-				if (pathInfoLength > (index + 1)) {
-					key = pathInfo.substring(index + 1);
-				}
-			} else {
-				bucket = pathInfo.substring(1);
-			}
-		}
-
-		o.setServiceEndpoint(serviceEndpoint);
-		o.setBucket(bucket);
-		o.setKey(key);
-
-		return o;
 	}
 
 	/**
@@ -194,6 +136,7 @@ public class S3ObjectRequest {
 		o.setServiceEndpoint(serviceEndpoint);
 		o.setBucket(bucket);
 		o.setKey(key);
+		o.setRequestor(requestor(req));
 
 		return o;
 	}
@@ -257,13 +200,54 @@ public class S3ObjectRequest {
 		this.key = key;
 	}
 
+	/**
+	 * Get the principal who made the request.
+	 * 
+	 * @return The principal who made the request.
+	 */
+	public CanonicalUser getRequestor() {
+		return requestor;
+	}
+
+	/**
+	 * Set the principal who made the request.
+	 * 
+	 * @param requestor
+	 *            The principal who made the request.
+	 */
+	public void setRequestor(CanonicalUser requestor) {
+		this.requestor = requestor;
+	}
+
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
 
 		buffer.append("serviceEndpoint:[").append(serviceEndpoint);
 		buffer.append("], bucket:[").append(bucket);
-		buffer.append("], key:[").append(key).append("]");
+		buffer.append("], key:[").append(key);
+		buffer.append("], requestor:[").append(requestor).append("]");
 
 		return buffer.toString();
+	}
+
+	/**
+	 * Determine the principal making the request.
+	 * 
+	 * @param req
+	 *            an HttpServletRequest object that contains the request the
+	 *            client has made of the servlet
+	 * @return The principal making the request. Will be a
+	 *         <code>CanonicalUser</code> with an id of the user principal
+	 *         name if the request is authenticated or an "anonymous"
+	 *         <code>Canonicaluser</code> is the request is non authenticated.
+	 */
+	public static CanonicalUser requestor(HttpServletRequest req) {
+		Principal authenticatedUser = req.getUserPrincipal();
+
+		if (authenticatedUser == null) {
+			return new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
+		} else {
+			return new CanonicalUser(authenticatedUser.getName());
+		}
 	}
 }

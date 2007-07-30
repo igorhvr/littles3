@@ -27,6 +27,11 @@ public class CanonicalUser implements Grantee {
 	private String displayName;
 
 	/**
+	 * "Special" id that indicates the anonymous user id.
+	 */
+	public static final String ID_ANONYMOUS = "http://www.jpeterson.com/canonicalUser/anonymous";
+
+	/**
 	 * Basic constructor.
 	 * 
 	 * @param id
@@ -87,6 +92,18 @@ public class CanonicalUser implements Grantee {
 	 */
 	public String getName() {
 		return getId();
+	}
+
+	/**
+	 * Used to determine if the user is "anonymous". This means that the request
+	 * was not authenticated.
+	 * 
+	 * @return <code>true</code> if this represents an authenticated
+	 *         principal, <code>false</code> if this represents an anonymous
+	 *         principal.
+	 */
+	public boolean isAnonymous() {
+		return id.equals(ID_ANONYMOUS);
 	}
 
 	/**

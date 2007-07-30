@@ -21,22 +21,21 @@ import org.springframework.dao.DataAccessException;
 import com.jpeterson.littles3.bo.S3Object;
 
 /**
- * Manage S3 object meta data.
+ * Manage S3 object resource.
  * 
  * @author Jesse Peterson
- * 
  */
 public interface S3ObjectDao {
 	/**
 	 * Load the S3 object.
 	 * 
 	 * @param bucket
-	 *            The bucket for the particular object's metadata.
+	 *            The bucket name for the particular object resource.
 	 * @param key
-	 *            The key for the particular object's metadata.
+	 *            The key for the particular object resource.
 	 * @return The S3 object for the provided bucket + key.
 	 * @throws DataAccessException
-	 *             Unable to load the object metadata.
+	 *             Unable to load the object resource.
 	 */
 	public S3Object loadS3Object(String bucket, String key)
 			throws DataAccessException;

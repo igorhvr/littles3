@@ -205,8 +205,8 @@ public class ResourcePermissionTest extends TestCase {
 
 		permission = new ResourcePermission(AuthenticatedUsersGroup
 				.getInstance(), "read, read_acp");
-		another = new ResourcePermission(AnonymousUser.getInstance(),
-				ResourcePermission.ACTION_READ);
+		another = new ResourcePermission(new CanonicalUser(
+				CanonicalUser.ID_ANONYMOUS), ResourcePermission.ACTION_READ);
 		assertFalse("Should not imply", permission.implies(another));
 
 		permission = new ResourcePermission(AllUsersGroup.getInstance(), "read");
@@ -218,11 +218,11 @@ public class ResourcePermissionTest extends TestCase {
 		assertFalse("Should not imply", permission.implies(another));
 
 		permission = new ResourcePermission(AllUsersGroup.getInstance(), "read");
-		another = new ResourcePermission(AnonymousUser.getInstance(),
-				ResourcePermission.ACTION_READ);
+		another = new ResourcePermission(new CanonicalUser(
+				CanonicalUser.ID_ANONYMOUS), ResourcePermission.ACTION_READ);
 		assertTrue("Should imply", permission.implies(another));
-		another = new ResourcePermission(AnonymousUser.getInstance(),
-				ResourcePermission.ACTION_WRITE);
+		another = new ResourcePermission(new CanonicalUser(
+				CanonicalUser.ID_ANONYMOUS), ResourcePermission.ACTION_WRITE);
 		assertFalse("Should not imply", permission.implies(another));
 	}
 

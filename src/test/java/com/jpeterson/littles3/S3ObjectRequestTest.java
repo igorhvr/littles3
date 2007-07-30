@@ -30,6 +30,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jmock.Mock;
 import org.jmock.MockObjectTestCase;
 
+import com.jpeterson.littles3.bo.CanonicalUser;
+
 public class S3ObjectRequestTest extends MockObjectTestCase {
 	private Log logger;
 
@@ -92,23 +94,55 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_create() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/myBucket/myKey.txt"));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("localhost"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://localhost/context/myBucket/myKey.txt")));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
 
 		assertEquals("Unexpected serviceEndpoint", "http://localhost/context",
 				o.getServiceEndpoint());
 		assertEquals("Unexpected bucket", "myBucket", o.getBucket());
 		assertEquals("Unexpected key", "myKey.txt", o.getKey());
+		assertEquals("Unexpected requestor", new CanonicalUser("unitTest"), o
+				.getRequestor());
+	}
+
+	/**
+	 * Test a basic <code>create</code> with an anonymous request.
+	 */
+	public void test_createAnonymousRequest() {
+		S3ObjectRequest o;
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
+
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
+				returnValue("/myBucket/myKey.txt"));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("Host")).will(returnValue("localhost"));
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
+				returnValue(new StringBuffer(
+						"http://localhost/context/myBucket/myKey.txt")));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(null));
+
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
+				.proxy(), "localhost");
+
+		assertEquals("Unexpected serviceEndpoint", "http://localhost/context",
+				o.getServiceEndpoint());
+		assertEquals("Unexpected bucket", "myBucket", o.getBucket());
+		assertEquals("Unexpected key", "myKey.txt", o.getKey());
+		assertEquals("Unexpected requestor", new CanonicalUser(
+				CanonicalUser.ID_ANONYMOUS), o.getRequestor());
 	}
 
 	/**
@@ -116,17 +150,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_createWithSpace() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/myBucket/my Key.txt"));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("localhost"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://localhost/context/myBucket/my%20Key.txt")));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
 
 		assertEquals("Unexpected serviceEndpoint", "http://localhost/context",
@@ -141,17 +177,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_createNoKeyBucketEndsWithSlash() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/myBucket/"));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("localhost"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://localhost/context/myBucket/")));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
 
 		assertEquals("Unexpected serviceEndpoint", "http://localhost/context",
@@ -166,17 +204,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_virtualHostingOrdinaryMethod() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/johnsmith/homepage.html"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://s3.amazonaws.com/johnsmith/homepage.html")));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("s3.amazonaws.com"));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
 
 		assertEquals("Unexpected serviceEndpoint", "http://s3.amazonaws.com", o
@@ -191,17 +231,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_virtualHostingHTTP10() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/johnsmith/homepage.html"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://s3.amazonaws.com/johnsmith/homepage.html")));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue(null));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
 
 		assertEquals("Unexpected serviceEndpoint", "http://s3.amazonaws.com", o
@@ -216,17 +258,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_virtualHostingSubDomain() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/homepage.html"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://johnsmith.s3.amazonaws.com/homepage.html")));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("johnsmith.s3.amazonaws.com"));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
 
 		assertEquals("Unexpected serviceEndpoint",
@@ -241,17 +285,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_virtualHostingSubDomainUpperCase() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/homepage.html"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://johnsmith.s3.amazonaws.com/homepage.html")));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("JohnSmith.s3.amazonaws.com"));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
 
 		assertEquals("Unexpected serviceEndpoint",
@@ -266,17 +312,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_virtualHostingDomain() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/homepage.html"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://www.johnsmith.net/homepage.html")));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("www.johnsmith.net"));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
 
 		assertEquals("Unexpected serviceEndpoint", "http://www.johnsmith.net",
@@ -291,17 +339,19 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_createNoKeyBucketNoSlash() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/myBucket"));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("localhost"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer(
 						"http://localhost/context/myBucket")));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
 
 		assertEquals("Unexpected serviceEndpoint", "http://localhost/context",
@@ -315,16 +365,18 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 */
 	public void test_createNoBucket() {
 		S3ObjectRequest o;
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/"));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("localhost"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer("http://localhost/context/")));
+		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
+				returnValue(new CanonicalUser("unitTest")));
 
-		o = S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
 
 		assertEquals("Unexpected serviceEndpoint", "http://localhost/context",
@@ -337,17 +389,17 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 	 * Test a <code>create</code> with an invalid request.
 	 */
 	public void test_createIllegalRequest() {
-		Mock mockHttServletRequest = mock(HttpServletRequest.class);
+		Mock mockHttpServletRequest = mock(HttpServletRequest.class);
 
-		mockHttServletRequest.expects(once()).method("getPathInfo").will(
+		mockHttpServletRequest.expects(once()).method("getPathInfo").will(
 				returnValue("/foo"));
-		mockHttServletRequest.expects(once()).method("getHeader").with(
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
 				eq("Host")).will(returnValue("localhost"));
-		mockHttServletRequest.expects(once()).method("getRequestURL").will(
+		mockHttpServletRequest.expects(once()).method("getRequestURL").will(
 				returnValue(new StringBuffer("http://localhost/context/bar")));
 
 		try {
-			S3ObjectRequest.create((HttpServletRequest) mockHttServletRequest
+			S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 					.proxy(), "localhost");
 			fail("Expected exception");
 		} catch (IllegalArgumentException e) {

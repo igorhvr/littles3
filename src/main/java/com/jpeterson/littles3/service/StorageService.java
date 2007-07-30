@@ -23,13 +23,27 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
 
 import com.jpeterson.littles3.bo.Bucket;
+import com.jpeterson.littles3.bo.CanonicalUser;
 import com.jpeterson.littles3.bo.S3Object;
 import com.jpeterson.littles3.dao.S3ObjectDao;
 
 public interface StorageService {
 
-	public S3Object createS3Object(String bucket, String key)
-			throws IOException;
+	/**
+	 * Create an S3Object.
+	 * 
+	 * @param bucket
+	 *            The bucket the object is to be created in.
+	 * @param key
+	 *            The object key.
+	 * @param owner
+	 *            The owner of the object.
+	 * @return An S3Object that can be populated and saved.
+	 * @throws IOException
+	 *             Unable to create the object.
+	 */
+	public S3Object createS3Object(String bucket, String key,
+			CanonicalUser owner) throws IOException;
 
 	/**
 	 * 

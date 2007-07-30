@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.security.AccessControlException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -44,7 +45,12 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.web.servlet.FrameworkServlet;
 
+import com.jpeterson.littles3.bo.Acp;
+import com.jpeterson.littles3.bo.AllUsersGroup;
+import com.jpeterson.littles3.bo.AuthenticatedUsersGroup;
 import com.jpeterson.littles3.bo.Bucket;
+import com.jpeterson.littles3.bo.CanonicalUser;
+import com.jpeterson.littles3.bo.ResourcePermission;
 import com.jpeterson.littles3.bo.S3Object;
 import com.jpeterson.littles3.dao.je.JeCentral;
 import com.jpeterson.littles3.service.BucketAlreadyExistsException;
@@ -96,6 +102,16 @@ public class StorageEngine extends FrameworkServlet {
 	static {
 		iso8601.setTimeZone(utc);
 	}
+
+	private static final String HEADER_X_AMZ_ACL = "x-amz-acl";
+
+	private static final String ACL_PRIVATE = "private";
+
+	private static final String ACL_PUBLIC_READ = "public-read";
+
+	private static final String ACL_PUBLIC_READ_WRITE = "public-read-write";
+
+	private static final String ACL_AUTHENTICATED_READ = "authenticated-read";
 
 	/**
 	 * Basic constructor. Initializes the logger.
@@ -314,11 +330,6 @@ public class StorageEngine extends FrameworkServlet {
 
 			if (or.getKey() != null) {
 				S3Object s3Object;
-				InputStream in = null;
-				OutputStream out = null;
-				byte[] buffer = new byte[4096];
-				int count;
-				String value;
 				StorageService storageService;
 
 				try {
@@ -337,75 +348,118 @@ public class StorageEngine extends FrameworkServlet {
 					return;
 				}
 
-				// headers
-				resp.setContentType(s3Object.getContentType());
-				if ((value = s3Object.getContentDisposition()) != null) {
-					resp.setHeader("Content-Disposition", value);
-				}
-				// TODO: set the Content-Range, if request includes Range
-				// TODO: add "x-amz-meta-" metadata
-				// TODO: add "x-amz-missing-meta", if any
+				if (req.getParameter("acl") != null) {
+					// retrieve access control policy
+					String response;
+					Acp acp = s3Object.getAcp();
 
-				resp.setDateHeader("Last-Modified", s3Object.getLastModified());
-				if ((value = s3Object.getETag()) != null) {
-					resp.setHeader("ETag", value);
-				}
-				if ((value = s3Object.getContentMD5()) != null) {
-					resp.setHeader("Content-MD5", value);
-				}
-				if ((value = s3Object.getContentDisposition()) != null) {
-					resp.setHeader("Content-Disposition", value);
-				}
-				resp.setHeader("Accept-Ranges", "bytes");
-
-				String rangeRequest = req.getHeader("Range");
-
-				if (rangeRequest != null) {
-					// request for a range
-					RangeSet rangeSet = RangeFactory
-							.processRangeHeader(rangeRequest);
-
-					// set content length
-					rangeSet.resolve(s3Object.getContentLength());
-
-					if (rangeSet.size() > 1) {
-						// requires multi-part response
-						// TODO: implement
-						resp.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+					try {
+						acp.canRead(or.getRequestor());
+					} catch (AccessControlException e) {
+						resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+						return;
 					}
 
-					Range[] ranges = (Range[]) rangeSet.toArray(new Range[0]);
-
-					resp.setHeader("Content-Range", formatRangeHeaderValue(
-							ranges[0], s3Object.getContentLength()));
-					resp.setHeader("Content-Length", Long.toString(rangeSet
-							.getLength()));
-
-					in = new RangeInputStream(s3Object.getInputStream(),
-							ranges[0]);
-					resp.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
-				} else {
-					// request for entire content
-					// Used instead of resp.setContentLength((int)); because
-					// Amazon
-					// limit is 5 gig, which is bigger than an int
-					resp.setHeader("Content-Length", Long.toString(s3Object
-							.getContentLength()));
-
-					in = s3Object.getInputStream();
+					response = Acp.encode(acp);
+					resp.setContentLength(response.length());
+					resp.setContentType("application/xml");
 					resp.setStatus(HttpServletResponse.SC_OK);
+
+					Writer out = resp.getWriter();
+					out.write(response);
+					out.flush(); // commit response
+					out.close();
+					out = null;
+				} else {
+					// retrieve object
+					InputStream in = null;
+					OutputStream out = null;
+					byte[] buffer = new byte[4096];
+					int count;
+					String value;
+
+					try {
+						s3Object.canRead(or.getRequestor());
+					} catch (AccessControlException e) {
+						resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+						return;
+					}
+
+					// headers
+					resp.setContentType(s3Object.getContentType());
+					if ((value = s3Object.getContentDisposition()) != null) {
+						resp.setHeader("Content-Disposition", value);
+					}
+					// TODO: set the Content-Range, if request includes Range
+					// TODO: add "x-amz-meta-" metadata
+					// TODO: add "x-amz-missing-meta", if any
+
+					resp.setDateHeader("Last-Modified", s3Object
+							.getLastModified());
+					if ((value = s3Object.getETag()) != null) {
+						resp.setHeader("ETag", value);
+					}
+					if ((value = s3Object.getContentMD5()) != null) {
+						resp.setHeader("Content-MD5", value);
+					}
+					if ((value = s3Object.getContentDisposition()) != null) {
+						resp.setHeader("Content-Disposition", value);
+					}
+					resp.setHeader("Accept-Ranges", "bytes");
+
+					String rangeRequest = req.getHeader("Range");
+
+					if (rangeRequest != null) {
+						// request for a range
+						RangeSet rangeSet = RangeFactory
+								.processRangeHeader(rangeRequest);
+
+						// set content length
+						rangeSet.resolve(s3Object.getContentLength());
+
+						if (rangeSet.size() > 1) {
+							// requires multi-part response
+							// TODO: implement
+							resp
+									.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+						}
+
+						Range[] ranges = (Range[]) rangeSet
+								.toArray(new Range[0]);
+
+						resp.setHeader("Content-Range", formatRangeHeaderValue(
+								ranges[0], s3Object.getContentLength()));
+						resp.setHeader("Content-Length", Long.toString(rangeSet
+								.getLength()));
+
+						in = new RangeInputStream(s3Object.getInputStream(),
+								ranges[0]);
+						resp.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+					} else {
+						// request for entire content
+						// Used instead of resp.setContentLength((int)); because
+						// Amazon
+						// limit is 5 gig, which is bigger than an int
+						resp.setHeader("Content-Length", Long.toString(s3Object
+								.getContentLength()));
+
+						in = s3Object.getInputStream();
+						resp.setStatus(HttpServletResponse.SC_OK);
+					}
+
+					// body
+					out = resp.getOutputStream();
+
+					while ((count = in.read(buffer, 0, buffer.length)) > 0) {
+						out.write(buffer, 0, count);
+					}
+
+					out.flush(); // commit response
+					out.close();
+					out = null;
 				}
-
-				// body
-				out = resp.getOutputStream();
-
-				while ((count = in.read(buffer, 0, buffer.length)) > 0) {
-					out.write(buffer, 0, count);
-				}
-
-				out.flush(); // commit response
-				out.close();
-				out = null;
 				return;
 			} else if (or.getBucket() != null) {
 				// operation on a bucket
@@ -517,6 +571,8 @@ public class StorageEngine extends FrameworkServlet {
 					.getString(CONFIG_HOST));
 			logger.debug("S3ObjectRequest: " + or);
 
+			CanonicalUser requestor = or.getRequestor();
+
 			if (or.getKey() != null) {
 				String value;
 				long contentLength;
@@ -537,6 +593,8 @@ public class StorageEngine extends FrameworkServlet {
 				storageService = (StorageService) getWebApplicationContext()
 						.getBean("storageService");
 
+				// TODO: make sure requestor can "WRITE" to the bucket
+
 				try {
 					oldS3Object = storageService.load(bucket, key);
 				} catch (DataRetrievalFailureException e) {
@@ -544,7 +602,8 @@ public class StorageEngine extends FrameworkServlet {
 				}
 
 				// create a new S3Object for this request to store an object
-				s3Object = storageService.createS3Object(bucket, key);
+				s3Object = storageService
+						.createS3Object(bucket, key, requestor);
 
 				out = s3Object.getOutputStream();
 				digestOutputStream = new DigestOutputStream(out, messageDigest);
@@ -613,6 +672,8 @@ public class StorageEngine extends FrameworkServlet {
 						.getMessageDigest().digest()));
 				resp.setHeader("ETag", value);
 				s3Object.setETag(value);
+
+				grantCannedAccessPolicies(req, s3Object.getAcp(), requestor);
 
 				// NOTE: This could be reengineered to have a two-phase commit.
 				if (oldS3Object != null) {
@@ -799,5 +860,42 @@ public class StorageEngine extends FrameworkServlet {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Grant the canned access policies for buckets or objects as part of a
+	 * <code>PUT</code> operation. The canned access policies are specified in
+	 * the Amazon S3 Developer Guide.
+	 * 
+	 * @param acp
+	 *            The Access Control Policy to grant the canned access policies
+	 *            to.
+	 * @param owner
+	 *            The principal making the request who is the owner of the
+	 *            resource.
+	 */
+	public static void grantCannedAccessPolicies(HttpServletRequest req,
+			Acp acp, CanonicalUser owner) {
+		String xAmzAcl;
+
+		xAmzAcl = req.getHeader(HEADER_X_AMZ_ACL);
+
+		if ((xAmzAcl == null) || (xAmzAcl.equals(ACL_PRIVATE))) {
+			acp.grant(owner, ResourcePermission.ACTION_FULL_CONTROL);
+		} else if (xAmzAcl.equals(ACL_PUBLIC_READ)) {
+			acp.grant(owner, ResourcePermission.ACTION_FULL_CONTROL);
+			acp.grant(AllUsersGroup.getInstance(),
+					ResourcePermission.ACTION_READ);
+		} else if (xAmzAcl.equals(ACL_PUBLIC_READ_WRITE)) {
+			acp.grant(owner, ResourcePermission.ACTION_FULL_CONTROL);
+			acp.grant(AllUsersGroup.getInstance(),
+					ResourcePermission.ACTION_READ);
+			acp.grant(AllUsersGroup.getInstance(),
+					ResourcePermission.ACTION_WRITE);
+		} else if (xAmzAcl.equals(ACL_AUTHENTICATED_READ)) {
+			acp.grant(owner, ResourcePermission.ACTION_FULL_CONTROL);
+			acp.grant(AuthenticatedUsersGroup.getInstance(),
+					ResourcePermission.ACTION_READ);
+		}
 	}
 }

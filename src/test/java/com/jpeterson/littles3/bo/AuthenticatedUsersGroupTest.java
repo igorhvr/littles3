@@ -70,8 +70,7 @@ public class AuthenticatedUsersGroupTest extends TestCase {
 		group = AuthenticatedUsersGroup.getInstance();
 
 		assertTrue("Should be member", group.isMember(new CanonicalUser("id")));
-		assertFalse("Should not be member", group.isMember(AnonymousUser
-				.getInstance()));
+		assertFalse("Should not be member", group.isMember(new CanonicalUser(CanonicalUser.ID_ANONYMOUS)));
 	}
 
 	/**

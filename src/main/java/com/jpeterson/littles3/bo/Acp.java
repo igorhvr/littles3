@@ -19,6 +19,7 @@ package com.jpeterson.littles3.bo;
 import java.security.AccessControlException;
 import java.security.Permission;
 import java.security.Permissions;
+import java.util.Enumeration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -124,6 +125,17 @@ public class Acp {
 	}
 
 	/**
+	 * Returns an enumeration of all of the grants in this Access Control
+	 * Policy.
+	 * 
+	 * @return an enumeration of the grants in the form of a
+	 *         <code>ResourcePermission</code> for each grant.
+	 */
+	public Enumeration grants() {
+		return permissions.elements();
+	}
+
+	/**
 	 * Returns the number of grants in this Access Control Policy.
 	 * 
 	 * @return the number of grants in this Acces Control Policy.
@@ -178,5 +190,62 @@ public class Acp {
 		permission = new ResourcePermission(grantee,
 				ResourcePermission.ACTION_WRITE_ACP);
 		checkPermission(permission);
+	}
+
+	/**
+	 * Encode an Acp as XML.
+	 * 
+	 * @param acp
+	 *            The Acp to encode.
+	 * @return The Acp encoded in XML.
+	 */
+	public static String encode(Acp acp) {
+		StringBuffer buffer = new StringBuffer();
+
+		buffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		buffer.append("<AccessControlPolicy>");
+		buffer.append("<Owner>");
+		buffer.append("<ID>").append(acp.getOwner().getId()).append("</ID>");
+		buffer.append("<DisplayName>").append(acp.getOwner().getDisplayName())
+				.append("</DisplayName>");
+		buffer.append("</Owner>");
+		buffer.append("<AccessControlList>");
+		for (Enumeration grants = acp.grants(); grants.hasMoreElements();) {
+			ResourcePermission grant = (ResourcePermission) grants
+					.nextElement();
+
+			buffer.append("<Grant>");
+
+			Grantee grantee = grant.getGrantee();
+			if (grantee instanceof GroupBase) {
+				GroupBase group = (GroupBase) grantee;
+				buffer
+						.append("<Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"Group\">");
+				buffer.append("<URI>").append(group.getUri().toString())
+						.append("</URI>");
+				buffer.append("</Grantee>");
+			} else {
+				CanonicalUser user = (CanonicalUser) grantee;
+				buffer
+						.append("<Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\">");
+				buffer.append("<ID>").append(user.getId()).append("</ID>");
+				buffer.append("<DisplayName>").append(user.getDisplayName())
+						.append("</DisplayName>");
+				buffer.append("</Grantee>");
+			}
+			// TODO: mighty hard coded...could be made a bit better
+			String permission = grant.getActions();
+			if (permission.equals("READ,WRITE,READ_ACP,WRITE_ACP")) {
+				permission = "FULL_CONTROL";
+			}
+			buffer.append("<Permission>").append(permission).append(
+					"</Permission>");
+
+			buffer.append("</Grant>");
+		}
+		buffer.append("</AccessControlList>");
+		buffer.append("</AccessControlPolicy>");
+
+		return buffer.toString();
 	}
 }

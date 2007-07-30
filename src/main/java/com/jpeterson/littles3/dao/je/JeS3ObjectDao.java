@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.dao.DataAccessException;
@@ -40,10 +39,8 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 
 /**
- * An implementation of <code>ObjectMetadataDao</code> and
- * <code>ObjectDataDao</code> that uses the file system to store the object's
- * data contents and Oracle Berkeley DB Java Edition to index and manage the
- * object's meta data.
+ * An implementation of <code>S3ObjectDao</code> that uses Oracle Berkeley DB
+ * Java Edition to index and manage the object's meta data.
  * 
  * @author Jesse Peterson
  */
@@ -52,8 +49,6 @@ public class JeS3ObjectDao implements S3ObjectDao {
 	private TupleBinding s3ObjectBucketKeyBinding = new S3ObjectBucketKeyTupleBinding();
 
 	private TupleBinding fileS3ObjectBinding = new FileS3ObjectTupleBinding();
-
-	private Configuration configuration;
 
 	private JeCentral jeCentral;
 
@@ -123,7 +118,7 @@ public class JeS3ObjectDao implements S3ObjectDao {
 			 * myDbEnvironment.openDatabase(null, "sampleDatabase", dbConfig);
 			 */
 
-			database = jeCentral.getDatabase("object");
+			database = jeCentral.getDatabase(JeCentral.OBJECT_DB_NAME);
 
 			if (database.get(null, theKey, theData, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
 				return (S3Object) fileS3ObjectBinding.entryToObject(theData);
@@ -133,7 +128,7 @@ public class JeS3ObjectDao implements S3ObjectDao {
 			}
 		} catch (DatabaseException e) {
 			throw new DataAccessResourceFailureException(
-					"Unable to store a database record", e);
+					"Unable to load a database record", e);
 		} finally {
 			/*
 			 * if (database != null) { try { database.close(); } catch
@@ -172,7 +167,7 @@ public class JeS3ObjectDao implements S3ObjectDao {
 			 * myDbEnvironment.openDatabase(null, "sampleDatabase", dbConfig);
 			 */
 
-			database = jeCentral.getDatabase("object");
+			database = jeCentral.getDatabase(JeCentral.OBJECT_DB_NAME);
 
 			database.putNoOverwrite(null, theKey, theData);
 		} catch (DatabaseException e) {
@@ -211,7 +206,7 @@ public class JeS3ObjectDao implements S3ObjectDao {
 			 * myDbEnvironment.openDatabase(null, "sampleDatabase", dbConfig);
 			 */
 
-			database = jeCentral.getDatabase("object");
+			database = jeCentral.getDatabase(JeCentral.OBJECT_DB_NAME);
 
 			database.delete(null, theKey);
 		} catch (DatabaseException e) {
@@ -268,7 +263,7 @@ public class JeS3ObjectDao implements S3ObjectDao {
 			try {
 				S3Object s3ObjectBucketKey;
 
-				database = jeCentral.getDatabase("object");
+				database = jeCentral.getDatabase(JeCentral.OBJECT_DB_NAME);
 				cursor = database.openCursor(null, null);
 
 				s3ObjectBucketKey = new S3ObjectBucketKey();
@@ -444,25 +439,6 @@ public class JeS3ObjectDao implements S3ObjectDao {
 
 	public Database getDatabase() {
 		return null;
-	}
-
-	/**
-	 * Get the configuration for the servlet.
-	 * 
-	 * @return The configuration for the servlet.
-	 */
-	public Configuration getConfiguration() {
-		return configuration;
-	}
-
-	/**
-	 * Set the configuration for the servlet.
-	 * 
-	 * @param configuration
-	 *            The configuration for the servlet.
-	 */
-	public void setConfiguration(Configuration configuration) {
-		this.configuration = configuration;
 	}
 
 	public JeCentral getJeCentral() {

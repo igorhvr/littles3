@@ -16,27 +16,21 @@
 
 package com.jpeterson.littles3.dao.je;
 
-import java.io.IOException;
-import java.net.URL;
+import java.util.Date;
 import java.util.Enumeration;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import com.jpeterson.littles3.bo.Acp;
 import com.jpeterson.littles3.bo.AllUsersGroup;
 import com.jpeterson.littles3.bo.AuthenticatedUsersGroup;
+import com.jpeterson.littles3.bo.Bucket;
 import com.jpeterson.littles3.bo.CanonicalUser;
-import com.jpeterson.littles3.bo.FileS3Object;
 import com.jpeterson.littles3.bo.Grantee;
 import com.jpeterson.littles3.bo.ResourcePermission;
-import com.jpeterson.littles3.bo.S3Object;
 import com.sleepycat.bind.tuple.TupleBinding;
 import com.sleepycat.bind.tuple.TupleInput;
 import com.sleepycat.bind.tuple.TupleOutput;
 
-public class FileS3ObjectTupleBinding extends TupleBinding {
-	private Log logger;
+public class BucketTupleBinding extends TupleBinding {
 
 	/**
 	 * Grantee types
@@ -47,44 +41,23 @@ public class FileS3ObjectTupleBinding extends TupleBinding {
 
 	private static final int GRANTEE_AUTHENTICATED_USERS_GROUP = 3;
 
-	public FileS3ObjectTupleBinding() {
+	public BucketTupleBinding() {
 		super();
-		logger = LogFactory.getLog(this.getClass());
 	}
 
 	@Override
 	public Object entryToObject(TupleInput entry) {
-		String bucket;
-		String key;
-		URL storageUrl;
+		Bucket bucket = new Bucket();
 		Acp acp;
 
 		// Data must be read in the same order that it was
 		// originally written.
 
-		bucket = entry.readString();
-		key = entry.readString();
-		try {
-			storageUrl = new URL(entry.readString());
-		} catch (IOException e) {
-			logger.error(
-					"Unable to read the storage URL from the database record",
-					e);
-			e.printStackTrace();
-			return null;
-		}
-
-		S3Object s3Object = new FileS3Object(bucket, key, storageUrl);
-
-		s3Object.setContentDisposition(entry.readString());
-		s3Object.setContentLength(entry.readLong());
-		s3Object.setContentMD5(entry.readString());
-		s3Object.setContentType(entry.readString());
-		s3Object.setETag(entry.readString());
-		s3Object.setLastModified(entry.readLong());
+		bucket.setName(entry.readString());
+		bucket.setCreated(new Date(entry.readLong()));
 
 		acp = new Acp();
-		s3Object.setAcp(acp);
+		bucket.setAcp(acp);
 
 		acp.setOwner(new CanonicalUser(entry.readString()));
 
@@ -115,12 +88,12 @@ public class FileS3ObjectTupleBinding extends TupleBinding {
 			acp.grant(grantee, entry.readString());
 		}
 
-		return s3Object;
+		return bucket;
 	}
 
 	@Override
 	public void objectToEntry(Object object, TupleOutput entry) {
-		S3Object s3Object = (S3Object) object;
+		Bucket bucket = (Bucket) object;
 		Acp acp;
 		Grantee grantee;
 		CanonicalUser user;
@@ -128,17 +101,10 @@ public class FileS3ObjectTupleBinding extends TupleBinding {
 		// Data must be read in the same order that it was
 		// originally written.
 
-		entry.writeString(s3Object.getBucket());
-		entry.writeString(s3Object.getKey());
-		entry.writeString(s3Object.getStorageUrl().toString());
-		entry.writeString(s3Object.getContentDisposition());
-		entry.writeLong(s3Object.getContentLength());
-		entry.writeString(s3Object.getContentMD5());
-		entry.writeString(s3Object.getContentType());
-		entry.writeString(s3Object.getETag());
-		entry.writeLong(s3Object.getLastModified());
+		entry.writeString(bucket.getName());
+		entry.writeLong(bucket.getCreated().getTime());
 
-		acp = s3Object.getAcp();
+		acp = bucket.getAcp();
 
 		user = acp.getOwner();
 		entry.writeString(user.getId());

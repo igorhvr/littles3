@@ -33,9 +33,15 @@ public class JeCentral {
 
 	private Database objectDb = null;
 
+	private Database bucketDb = null;
+
 	private Configuration configuration;
 
 	private Log logger;
+
+	public static final String OBJECT_DB_NAME = "object";
+
+	public static final String BUCKET_DB_NAME = "bucket";
 
 	public JeCentral() {
 		logger = LogFactory.getLog(this.getClass());
@@ -68,7 +74,8 @@ public class JeCentral {
 
 		String storageLocation = configuration.getString("storageLocation");
 		String dirDb = configuration.getString("dir.db");
-		String dbObjectName = configuration.getString("db." + "object");
+		String dbObjectName = configuration.getString("db." + OBJECT_DB_NAME);
+		String dbBucketName = configuration.getString("db." + BUCKET_DB_NAME);
 		EnvironmentConfig envConf = new EnvironmentConfig();
 		envConf.setAllowCreate(true);
 		env = new Environment(new File(storageLocation, dirDb), envConf);
@@ -76,6 +83,7 @@ public class JeCentral {
 		DatabaseConfig dbConfig = new DatabaseConfig();
 		dbConfig.setAllowCreate(true);
 		objectDb = env.openDatabase(null, dbObjectName, dbConfig);
+		bucketDb = env.openDatabase(null, dbBucketName, dbConfig);
 	}
 
 	public void closeEnv() {
@@ -83,14 +91,17 @@ public class JeCentral {
 
 		try {
 			objectDb.close();
+			bucketDb.close();
 			env.close();
 		} catch (DatabaseException DBE) {
 		}
 	}
 
 	public Database getDatabase(String name) {
-		if (name.equals("object")) {
+		if (name.equals(OBJECT_DB_NAME)) {
 			return objectDb;
+		} else if (name.equals(BUCKET_DB_NAME)) {
+			return bucketDb;
 		}
 
 		return null;
