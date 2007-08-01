@@ -83,7 +83,7 @@ public class JeBucketDao implements BucketDao {
 				return (Bucket) bucketBinding.entryToObject(theData);
 			} else {
 				throw new DataRetrievalFailureException(
-						"Could not find S3Object");
+						"Could not find Bucket: " + bucket);
 			}
 		} catch (DatabaseException e) {
 			throw new DataAccessResourceFailureException(

@@ -474,31 +474,65 @@ public class StorageEngine extends FrameworkServlet {
 				storageService = (StorageService) getWebApplicationContext()
 						.getBean("storageService");
 
-				prefix = req.getParameter("prefix");
-				if (prefix == null) {
-					prefix = "";
-				}
-				marker = req.getParameter("marker");
-				value = req.getParameter("max-keys");
-				if (value != null) {
+				if (req.getParameter("acl") != null) {
+					// retrieve access control policy
+					Acp acp;
+
 					try {
-						maxKeys = Integer.parseInt(value);
-					} catch (NumberFormatException e) {
-						logger.info("max-keys must be numeric: " + value);
+						acp = storageService.loadBucket(or.getBucket())
+								.getAcp();
+					} catch (DataAccessException e) {
+						resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchBucket");
+						return;
 					}
+
+					try {
+						acp.canRead(or.getRequestor());
+					} catch (AccessControlException e) {
+						resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+						return;
+					}
+
+					response = Acp.encode(acp);
+					resp.setContentLength(response.length());
+					resp.setContentType("application/xml");
+					resp.setStatus(HttpServletResponse.SC_OK);
+
+					Writer out = resp.getWriter();
+					out.write(response);
+					out.flush(); // commit response
+					out.close();
+					out = null;
+				} else {
+					prefix = req.getParameter("prefix");
+					if (prefix == null) {
+						prefix = "";
+					}
+					marker = req.getParameter("marker");
+					value = req.getParameter("max-keys");
+					if (value != null) {
+						try {
+							maxKeys = Integer.parseInt(value);
+						} catch (NumberFormatException e) {
+							logger.info("max-keys must be numeric: " + value);
+						}
+					}
+
+					delimiter = req.getParameter("delimiter");
+
+					response = storageService.listKeys(storageService
+							.loadBucket(or.getBucket()), prefix, marker,
+							delimiter, maxKeys, or.getRequestor());
+
+					resp.setContentLength(response.length());
+					resp.setContentType("application/xml");
+					resp.setStatus(HttpServletResponse.SC_OK);
+
+					Writer out = resp.getWriter();
+					out.write(response);
 				}
-
-				delimiter = req.getParameter("delimiter");
-
-				response = storageService.listKeys(or.getBucket(), prefix,
-						marker, delimiter, maxKeys);
-
-				resp.setContentLength(response.length());
-				resp.setContentType("application/xml");
-				resp.setStatus(HttpServletResponse.SC_OK);
-
-				Writer out = resp.getWriter();
-				out.write(response);
 				return;
 			} else {
 				// operation on the service
@@ -581,7 +615,8 @@ public class StorageEngine extends FrameworkServlet {
 				S3Object oldS3Object = null;
 				S3Object s3Object;
 				StorageService storageService;
-				String bucket = or.getBucket();
+				Bucket bucket;
+				String bucketName = or.getBucket();
 				String key = or.getKey();
 
 				if (!isValidKey(key)) {
@@ -593,17 +628,34 @@ public class StorageEngine extends FrameworkServlet {
 				storageService = (StorageService) getWebApplicationContext()
 						.getBean("storageService");
 
-				// TODO: make sure requestor can "WRITE" to the bucket
+				// make sure requestor can "WRITE" to the bucket
+				try {
+					bucket = storageService.loadBucket(bucketName);
+				} catch (DataAccessException e) {
+					resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+							"NoSuchBucket");
+					return;
+				}
 
 				try {
-					oldS3Object = storageService.load(bucket, key);
+					oldS3Object = storageService.load(bucket.getName(), key);
 				} catch (DataRetrievalFailureException e) {
 					// ignore
 				}
 
 				// create a new S3Object for this request to store an object
-				s3Object = storageService
-						.createS3Object(bucket, key, requestor);
+				try {
+					s3Object = storageService.createS3Object(bucket, key,
+							requestor);
+				} catch (DataAccessException e) {
+					resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+							"NoSuchBucket");
+					return;
+				} catch (AccessControlException e) {
+					resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+							"AccessDenied");
+					return;
+				}
 
 				out = s3Object.getOutputStream();
 				digestOutputStream = new DigestOutputStream(out, messageDigest);
@@ -647,7 +699,7 @@ public class StorageEngine extends FrameworkServlet {
 						digestOutputStream = null;
 					}
 					// clean up
-					storageService.remove(s3Object);
+					storageService.remove(s3Object, requestor);
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
 							"IncompleteBody");
 					return;
@@ -677,16 +729,17 @@ public class StorageEngine extends FrameworkServlet {
 
 				// NOTE: This could be reengineered to have a two-phase commit.
 				if (oldS3Object != null) {
-					storageService.remove(oldS3Object);
+					storageService.remove(oldS3Object, requestor);
 				}
-				storageService.store(s3Object);
+				storageService.store(s3Object, requestor);
 			} else if (or.getBucket() != null) {
 				StorageService storageService;
+				Bucket bucket;
 
 				// validate bucket
-				String bucket = or.getBucket();
+				String bucketName = or.getBucket();
 
-				if (!isValidBucketName(bucket)) {
+				if (!isValidBucketName(bucketName)) {
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
 							"InvalidBucketName");
 					return;
@@ -696,12 +749,16 @@ public class StorageEngine extends FrameworkServlet {
 						.getBean("storageService");
 
 				try {
-					storageService.createBucket(bucket);
+					bucket = storageService.createBucket(bucketName, requestor);
 				} catch (BucketAlreadyExistsException e) {
 					resp.sendError(HttpServletResponse.SC_CONFLICT,
 							"BucketAlreadyExists");
 					return;
 				}
+
+				grantCannedAccessPolicies(req, bucket.getAcp(), requestor);
+
+				storageService.storeBucket(bucket, requestor);
 			}
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
@@ -741,6 +798,8 @@ public class StorageEngine extends FrameworkServlet {
 
 		logger.debug("S3ObjectRequest: " + or);
 
+		CanonicalUser requestor = or.getRequestor();
+
 		if (or.getKey() != null) {
 			S3Object s3Object;
 			StorageService storageService;
@@ -754,7 +813,7 @@ public class StorageEngine extends FrameworkServlet {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "NoSuchKey");
 				return;
 			}
-			storageService.remove(s3Object);
+			storageService.remove(s3Object, requestor);
 
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 			return;
@@ -762,13 +821,14 @@ public class StorageEngine extends FrameworkServlet {
 			StorageService storageService;
 
 			// validate bucket
-			String bucket = or.getBucket();
+			String bucketName = or.getBucket();
 
 			storageService = (StorageService) getWebApplicationContext()
 					.getBean("storageService");
 
 			try {
-				storageService.deleteBucket(bucket);
+				storageService.deleteBucket(storageService
+						.loadBucket(bucketName), requestor);
 			} catch (BucketNotEmptyException e) {
 				resp.sendError(HttpServletResponse.SC_CONFLICT,
 						"BucketNotEmpty");

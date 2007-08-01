@@ -17,6 +17,7 @@
 package com.jpeterson.littles3.service;
 
 import java.io.IOException;
+import java.security.AccessControlException;
 import java.util.List;
 
 import org.springframework.dao.DataAccessException;
@@ -25,6 +26,7 @@ import org.springframework.dao.DataRetrievalFailureException;
 import com.jpeterson.littles3.bo.Bucket;
 import com.jpeterson.littles3.bo.CanonicalUser;
 import com.jpeterson.littles3.bo.S3Object;
+import com.jpeterson.littles3.dao.BucketDao;
 import com.jpeterson.littles3.dao.S3ObjectDao;
 
 public interface StorageService {
@@ -41,25 +43,34 @@ public interface StorageService {
 	 * @return An S3Object that can be populated and saved.
 	 * @throws IOException
 	 *             Unable to create the object.
+	 * @throws AccessControlException
+	 *             Unable to create object because the owner doesn't have WRITE
+	 *             permission to the bucket.
 	 */
-	public S3Object createS3Object(String bucket, String key,
-			CanonicalUser owner) throws IOException;
+	public S3Object createS3Object(Bucket bucket, String key,
+			CanonicalUser owner) throws IOException, AccessControlException;
 
 	/**
+	 * Load an S3Object.
 	 * 
 	 * @param bucket
+	 *            The name of the bucket containing the object.
 	 * @param key
+	 *            The object key.
 	 * @return
 	 * @throws DataRetrievalFailureException
 	 *             Unable to find the <code>S3Object</code> for the provided
 	 *             <code>bucket</code> and <code>key</code>.
 	 * @throws DataAccessException
 	 */
-	public S3Object load(String bucket, String key) throws DataAccessException;
+	public S3Object load(String bucket, String key) throws DataAccessException,
+			AccessControlException;
 
-	public void store(S3Object s3Object) throws DataAccessException;
+	public void store(S3Object s3Object, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException;
 
-	public void remove(S3Object s3Object) throws DataAccessException;
+	public void remove(S3Object s3Object, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException;
 
 	public void setS3ObjectDao(S3ObjectDao s3ObjectDao);
 
@@ -68,24 +79,33 @@ public interface StorageService {
 	 * 
 	 * @param name
 	 *            The name of the bucket.
+	 * @param owner
+	 *            The owner of the bucket.
 	 * @throws BucketAlreadyExistsException
 	 *             Thrown if the bucket to create already exists.
 	 * @throws IOException
 	 *             Unable to create bucket.
 	 */
-	public void createBucket(String name) throws IOException;
+	public Bucket createBucket(String name, CanonicalUser owner)
+			throws IOException;
+
+	public Bucket loadBucket(String name) throws DataAccessException;
+
+	public void storeBucket(Bucket bucket, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException;
 
 	/**
 	 * Delete a bucket.
 	 * 
-	 * @param name
-	 *            The name of the bucket.
+	 * @param bucket
+	 *            The bucket to delete.
 	 * @throws BucketNotEmptyException
 	 *             Thrown if the bucket to delete is not empty.
 	 * @throws IOException
 	 *             Unable to delete bucket.
 	 */
-	public void deleteBucket(String name) throws IOException;
+	public void deleteBucket(Bucket bucket, CanonicalUser requestor)
+			throws IOException, AccessControlException;
 
 	/**
 	 * Find the buckets for a user.
@@ -98,6 +118,9 @@ public interface StorageService {
 	 */
 	public List<Bucket> findBuckets(String username) throws IOException;
 
-	public String listKeys(String bucket, String prefix, String marker,
-			String delimiter, int maxKeys) throws DataAccessException;
+	public String listKeys(Bucket bucket, String prefix, String marker,
+			String delimiter, int maxKeys, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException;
+
+	public void setBucketDao(BucketDao bucketDao);
 }

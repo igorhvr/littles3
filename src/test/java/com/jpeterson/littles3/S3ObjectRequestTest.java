@@ -105,6 +105,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 						"http://localhost/context/myBucket/myKey.txt")));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
@@ -133,6 +135,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 						"http://localhost/context/myBucket/myKey.txt")));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(null));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
@@ -161,6 +165,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 						"http://localhost/context/myBucket/my%20Key.txt")));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
@@ -188,6 +194,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 						"http://localhost/context/myBucket/")));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
@@ -215,6 +223,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("Host")).will(returnValue("s3.amazonaws.com"));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
@@ -242,6 +252,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("Host")).will(returnValue(null));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
@@ -269,6 +281,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("Host")).will(returnValue("johnsmith.s3.amazonaws.com"));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
@@ -296,6 +310,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("Host")).will(returnValue("JohnSmith.s3.amazonaws.com"));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
@@ -323,6 +339,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("Host")).will(returnValue("www.johnsmith.net"));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "s3.amazonaws.com");
@@ -350,6 +368,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 						"http://localhost/context/myBucket")));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");
@@ -375,6 +395,8 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				returnValue(new StringBuffer("http://localhost/context/")));
 		mockHttpServletRequest.expects(once()).method("getUserPrincipal").will(
 				returnValue(new CanonicalUser("unitTest")));
+		mockHttpServletRequest.expects(once()).method("getHeader").with(
+				eq("x-hack-user")).will(returnValue(null));
 
 		o = S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
 				.proxy(), "localhost");

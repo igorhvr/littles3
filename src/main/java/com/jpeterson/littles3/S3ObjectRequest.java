@@ -243,6 +243,17 @@ public class S3ObjectRequest {
 	 */
 	public static CanonicalUser requestor(HttpServletRequest req) {
 		Principal authenticatedUser = req.getUserPrincipal();
+		// TODO: remove hack
+		boolean hack = true;
+
+		if (hack) {
+			String username = req.getHeader("x-hack-user");
+			if (username != null) {
+				System.out.println("HACK! USING USERNAME FROM HEADER: "
+						+ username);
+				return new CanonicalUser(username);
+			}
+		}
 
 		if (authenticatedUser == null) {
 			return new CanonicalUser(CanonicalUser.ID_ANONYMOUS);

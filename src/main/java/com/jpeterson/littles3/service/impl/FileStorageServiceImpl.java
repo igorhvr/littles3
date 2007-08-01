@@ -18,6 +18,7 @@ package com.jpeterson.littles3.service.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +35,7 @@ import com.jpeterson.littles3.bo.CanonicalUser;
 import com.jpeterson.littles3.bo.FileS3Object;
 import com.jpeterson.littles3.bo.ResourcePermission;
 import com.jpeterson.littles3.bo.S3Object;
+import com.jpeterson.littles3.dao.BucketDao;
 import com.jpeterson.littles3.dao.S3ObjectDao;
 import com.jpeterson.littles3.service.BucketAlreadyExistsException;
 import com.jpeterson.littles3.service.BucketNotEmptyException;
@@ -53,23 +55,27 @@ public class FileStorageServiceImpl implements StorageService {
 	private static final String fileSeparator = System
 			.getProperty("file.separator");
 
+	private BucketDao bucketDao;
+
 	private S3ObjectDao s3ObjectDao;
 
 	public FileStorageServiceImpl() {
 		logger = LogFactory.getLog(this.getClass());
 	}
 
-	public S3Object createS3Object(String bucket, String key,
-			CanonicalUser owner) throws IOException {
+	public S3Object createS3Object(Bucket bucket, String key,
+			CanonicalUser owner) throws IOException, AccessControlException {
 		String guid;
 		File storageFile;
 		Acp acp;
 		S3Object s3Object;
 
-		logger.debug("Creating S3Object for bucket[" + bucket + "] + key["
-				+ key + "]");
+		logger.debug("Creating S3Object for bucket[" + bucket.getName()
+				+ "] + key[" + key + "]");
 
-		String bucketPath = generateBucketPath(bucket).toString();
+		bucket.canWrite(owner);
+
+		String bucketPath = generateBucketPath(bucket.getName()).toString();
 		File bucketDirectory = new File(bucketPath);
 		if (!bucketDirectory.exists()) {
 			throw new IOException("Bucket doesn't exist");
@@ -85,22 +91,27 @@ public class FileStorageServiceImpl implements StorageService {
 		acp = new Acp();
 		acp.setOwner(owner);
 
-		s3Object = new FileS3Object(bucket, key, storageFile.toURI().toURL());
+		s3Object = new FileS3Object(bucket.getName(), key, storageFile.toURI()
+				.toURL());
 		s3Object.setAcp(acp);
 		return s3Object;
 	}
 
-	public S3Object load(String bucket, String key) throws DataAccessException {
-		return s3ObjectDao.loadS3Object(bucket, key);
+	public S3Object load(String bucket, String key)
+			throws DataAccessException {
+		S3Object object = s3ObjectDao.loadS3Object(bucket, key);
+
+		return object;
 	}
 
-	public void remove(S3Object s3Object) throws DataAccessException {
-		s3ObjectDao.removeS3Object(s3Object);
-		s3Object.deleteData();
-	}
-
-	public void store(S3Object s3Object) throws DataAccessException {
+	public void store(S3Object s3Object, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException {
 		Acp acp;
+		Bucket bucket;
+
+		bucket = bucketDao.loadBucket(s3Object.getBucket());
+
+		bucket.canWrite(requestor);
 
 		acp = s3Object.getAcp();
 		if (acp.size() == 0) {
@@ -111,8 +122,23 @@ public class FileStorageServiceImpl implements StorageService {
 		s3ObjectDao.storeS3Object(s3Object);
 	}
 
-	public void createBucket(String name) throws IOException {
+	public void remove(S3Object s3Object, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException {
+		Bucket bucket;
+
+		bucket = bucketDao.loadBucket(s3Object.getBucket());
+
+		bucket.canWrite(requestor);
+
+		s3ObjectDao.removeS3Object(s3Object);
+		s3Object.deleteData();
+	}
+
+	public Bucket createBucket(String name, CanonicalUser owner)
+			throws IOException {
 		File bucketDirectory;
+		Acp acp;
+		Bucket bucket;
 
 		bucketDirectory = new File(generateBucketPath(name).toString());
 
@@ -123,14 +149,50 @@ public class FileStorageServiceImpl implements StorageService {
 		if (!bucketDirectory.mkdir()) {
 			throw new IOException("Could not create bucket");
 		}
+
+		acp = new Acp();
+		acp.setOwner(owner);
+
+		bucket = new Bucket();
+		bucket.setAcp(acp);
+		bucket.setName(name);
+		bucket.setCreated(new Date());
+
+		return bucket;
 	}
 
-	public void deleteBucket(String name) throws IOException {
+	public Bucket loadBucket(String name) throws DataAccessException {
+		return bucketDao.loadBucket(name);
+	}
+
+	public void storeBucket(Bucket bucket, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException {
+		Acp acp;
+
+		acp = bucket.getAcp();
+		if (acp.size() == 0) {
+			// add a default grant
+			acp.grant(acp.getOwner(), ResourcePermission.ACTION_FULL_CONTROL);
+		}
+
+		bucket.canWrite(requestor);
+
+		bucketDao.storeBucket(bucket);
+	}
+
+	public void deleteBucket(Bucket bucket, CanonicalUser requestor)
+			throws IOException, AccessControlException {
 		File bucketDirectory;
 
-		logger.debug("Request to delete bucket: " + name);
+		logger.debug("Request to delete bucket: " + bucket.getName());
 
-		bucketDirectory = new File(generateBucketPath(name).toString());
+		if (!requestor.equals(bucket.getAcp().getOwner())) {
+			throw new AccessControlException(
+					"Only the owner can delete a bucket");
+		}
+
+		bucketDirectory = new File(generateBucketPath(bucket.getName())
+				.toString());
 
 		if (bucketDirectory.exists()) {
 			String[] files = bucketDirectory.list();
@@ -145,6 +207,8 @@ public class FileStorageServiceImpl implements StorageService {
 				throw new IOException("Could not delete bucket");
 			}
 		}
+
+		bucketDao.removeBucket(bucket);
 	}
 
 	public List<Bucket> findBuckets(String username) throws IOException {
@@ -191,9 +255,20 @@ public class FileStorageServiceImpl implements StorageService {
 		return buckets;
 	}
 
-	public String listKeys(String bucket, String prefix, String marker,
-			String delimiter, int maxKeys) throws DataAccessException {
-		return s3ObjectDao.listKeys(bucket, prefix, marker, delimiter, maxKeys);
+	public String listKeys(Bucket bucket, String prefix, String marker,
+			String delimiter, int maxKeys, CanonicalUser requestor)
+			throws DataAccessException, AccessControlException {
+		bucket.canRead(requestor);
+		return s3ObjectDao.listKeys(bucket.getName(), prefix, marker,
+				delimiter, maxKeys);
+	}
+
+	public BucketDao getBucketDao() {
+		return bucketDao;
+	}
+
+	public void setBucketDao(BucketDao bucketDao) {
+		this.bucketDao = bucketDao;
 	}
 
 	public S3ObjectDao getS3ObjectDao() {
