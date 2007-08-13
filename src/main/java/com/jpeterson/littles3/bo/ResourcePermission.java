@@ -109,11 +109,17 @@ public class ResourcePermission extends Permission {
 	 * 
 	 * @param mask
 	 *            The bit mask of actions.
-	 * @return A String representation,
+	 * @return A String representation, in the canonical form. The order is
+	 *         "READ", "WRITE", "READ_ACP", "WRITE_ACP". If all actions, returns
+	 *         the shorthand action "FULL_CONTROL".
 	 */
 	private static String getActions(int mask) {
 		StringBuffer buffer = new StringBuffer();
 		boolean comma = false;
+
+		if ((mask & FULL_CONTROL) == FULL_CONTROL) {
+			return (ACTION_FULL_CONTROL);
+		}
 
 		if ((mask & READ) == READ) {
 			comma = true;

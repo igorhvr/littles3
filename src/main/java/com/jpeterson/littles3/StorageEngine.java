@@ -113,6 +113,8 @@ public class StorageEngine extends FrameworkServlet {
 
 	private static final String ACL_AUTHENTICATED_READ = "authenticated-read";
 
+	private static final String PARAMETER_ACL = "acl";
+
 	/**
 	 * Basic constructor. Initializes the logger.
 	 */
@@ -348,7 +350,7 @@ public class StorageEngine extends FrameworkServlet {
 					return;
 				}
 
-				if (req.getParameter("acl") != null) {
+				if (req.getParameter(PARAMETER_ACL) != null) {
 					// retrieve access control policy
 					String response;
 					Acp acp = s3Object.getAcp();
@@ -474,7 +476,7 @@ public class StorageEngine extends FrameworkServlet {
 				storageService = (StorageService) getWebApplicationContext()
 						.getBean("storageService");
 
-				if (req.getParameter("acl") != null) {
+				if (req.getParameter(PARAMETER_ACL) != null) {
 					// retrieve access control policy
 					Acp acp;
 

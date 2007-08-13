@@ -83,7 +83,7 @@ public class ResourcePermissionTest extends TestCase {
 
 		permission = new ResourcePermission(grantee,
 				ResourcePermission.ACTION_FULL_CONTROL);
-		assertEquals("Unexpected value", "READ,WRITE,READ_ACP,WRITE_ACP",
+		assertEquals("Unexpected value", "FULL_CONTROL",
 				permission.getActions());
 		permission = new ResourcePermission(grantee,
 				ResourcePermission.ACTION_READ);

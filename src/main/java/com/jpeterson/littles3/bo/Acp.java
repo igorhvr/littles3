@@ -16,13 +16,24 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.AccessControlException;
 import java.security.Permission;
 import java.security.Permissions;
 import java.util.Enumeration;
+import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.Namespace;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
 /**
  * Implementation of S3 Access Control Policy.
@@ -42,6 +53,33 @@ public class Acp {
 	 * Maximum number of grants supported in one Access Control Policy.
 	 */
 	public static final int MAX_GRANT_COUNT = 100;
+
+	private static final String ELEMENT_ACCESS_CONTROL_POLICY = "AccessControlPolicy";
+
+	private static final String ELEMENT_OWNER = "Owner";
+
+	private static final String ELEMENT_ACCESS_CONTROL_LIST = "AccessControlList";
+
+	private static final String ELEMENT_GRANT = "Grant";
+
+	private static final String ELEMENT_PERMISSION = "Permission";
+
+	private static final String ELEMENT_GRANTEE = "Grantee";
+
+	private static final String ELEMENT_URI = "URI";
+
+	private static final String ELEMENT_ID = "ID";
+
+	private static final String ELEMENT_DISPLAY_NAME = "DisplayName";
+
+	private static final String ATTRIBUTE_TYPE = "type";
+
+	private static final String ATTRIBUTE_TYPE_VALUE_GROUP = "Group";
+
+	private static final String ATTRIBUTE_TYPE_VALUE_CANONICAL_USER = "CanonicalUser";
+
+	private static final Namespace NAMESPACE_XSI = Namespace.getNamespace(
+			"xsi", "http://www.w3.org/2001/XMLSchema-instance");
 
 	/**
 	 * Basic constructor.
@@ -200,52 +238,236 @@ public class Acp {
 	 * @return The Acp encoded in XML.
 	 */
 	public static String encode(Acp acp) {
-		StringBuffer buffer = new StringBuffer();
+		Document accessControlPolicy;
+		Element accessControlPolicyElement;
+		Element ownerElement;
+		Element accessControlListElement;
+		Element grantElement;
 
-		buffer.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		buffer.append("<AccessControlPolicy>");
-		buffer.append("<Owner>");
-		buffer.append("<ID>").append(acp.getOwner().getId()).append("</ID>");
-		buffer.append("<DisplayName>").append(acp.getOwner().getDisplayName())
-				.append("</DisplayName>");
-		buffer.append("</Owner>");
-		buffer.append("<AccessControlList>");
+		accessControlPolicyElement = new Element(ELEMENT_ACCESS_CONTROL_POLICY);
+
+		ownerElement = new Element(ELEMENT_OWNER);
+		encodeCanonicalUser(acp.getOwner(), ownerElement);
+		accessControlPolicyElement.addContent(ownerElement);
+
+		accessControlListElement = new Element(ELEMENT_ACCESS_CONTROL_LIST);
+
 		for (Enumeration grants = acp.grants(); grants.hasMoreElements();) {
 			ResourcePermission grant = (ResourcePermission) grants
 					.nextElement();
-
-			buffer.append("<Grant>");
-
 			Grantee grantee = grant.getGrantee();
+
+			grantElement = new Element(ELEMENT_GRANT);
+
 			if (grantee instanceof GroupBase) {
-				GroupBase group = (GroupBase) grantee;
-				buffer
-						.append("<Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"Group\">");
-				buffer.append("<URI>").append(group.getUri().toString())
-						.append("</URI>");
-				buffer.append("</Grantee>");
+				encodeGroupGrantee((GroupBase) grantee, grantElement);
 			} else {
-				CanonicalUser user = (CanonicalUser) grantee;
-				buffer
-						.append("<Grantee xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"CanonicalUser\">");
-				buffer.append("<ID>").append(user.getId()).append("</ID>");
-				buffer.append("<DisplayName>").append(user.getDisplayName())
-						.append("</DisplayName>");
-				buffer.append("</Grantee>");
+				encodeCanonicalUserGrantee((CanonicalUser) grantee,
+						grantElement);
 			}
-			// TODO: mighty hard coded...could be made a bit better
-			String permission = grant.getActions();
-			if (permission.equals("READ,WRITE,READ_ACP,WRITE_ACP")) {
-				permission = "FULL_CONTROL";
-			}
-			buffer.append("<Permission>").append(permission).append(
-					"</Permission>");
 
-			buffer.append("</Grant>");
+			grantElement.addContent(new Element(ELEMENT_PERMISSION)
+					.setText(grant.getActions()));
+
+			accessControlListElement.addContent(grantElement);
 		}
-		buffer.append("</AccessControlList>");
-		buffer.append("</AccessControlPolicy>");
+		accessControlPolicyElement.addContent(accessControlListElement);
 
-		return buffer.toString();
+		accessControlPolicy = new Document(accessControlPolicyElement);
+
+		return new XMLOutputter(Format.getCompactFormat())
+				.outputString(accessControlPolicy);
+	}
+
+	/**
+	 * Encode a group grantee.
+	 * 
+	 * @param group
+	 *            The group to encode.
+	 * @param parent
+	 *            The parent element to contain the grantee fragment.
+	 */
+	private static void encodeGroupGrantee(GroupBase group, Element parent) {
+		Element granteeElement = new Element(ELEMENT_GRANTEE);
+
+		granteeElement.setAttribute(ATTRIBUTE_TYPE, ATTRIBUTE_TYPE_VALUE_GROUP,
+				NAMESPACE_XSI);
+		granteeElement.addContent(new Element(ELEMENT_URI).setText(group
+				.getUri().toString()));
+
+		parent.addContent(granteeElement);
+	}
+
+	/**
+	 * Encode a canonical user grantee.
+	 * 
+	 * @param user
+	 *            The user to encode.
+	 * @param parent
+	 *            The parent element to contain the grantee fragment.
+	 */
+	private static void encodeCanonicalUserGrantee(CanonicalUser user,
+			Element parent) {
+		Element granteeElement = new Element(ELEMENT_GRANTEE);
+
+		granteeElement.setAttribute(ATTRIBUTE_TYPE,
+				ATTRIBUTE_TYPE_VALUE_CANONICAL_USER, NAMESPACE_XSI);
+		encodeCanonicalUser(user, granteeElement);
+
+		parent.addContent(granteeElement);
+	}
+
+	/**
+	 * Encode a canonical user.
+	 * 
+	 * @param user
+	 *            The user to encode.
+	 * @param parent
+	 *            The parent element to contain the canonical user fragment.
+	 */
+	private static void encodeCanonicalUser(CanonicalUser user, Element parent) {
+		parent.addContent(new Element(ELEMENT_ID).setText(user.getId()));
+		parent.addContent(new Element(ELEMENT_DISPLAY_NAME).setText(user
+				.getDisplayName()));
+	}
+
+	/**
+	 * Decode an Acp as XML.
+	 * 
+	 * @param xml
+	 *            The Acp encoded as XML.
+	 * @return The Acp decoded from the XML.
+	 */
+	public static Acp decode(InputStream xml) throws IOException {
+		Acp acp;
+		SAXBuilder builder;
+		Document document;
+		Element accessControlPolicyElement;
+		Element ownerElement;
+		Element idElement, displayNameElement;
+		Element accessControlListElement;
+		Element grantElement;
+		Element granteeElement, permissionElement;
+		Element uriElement;
+		Attribute typeAttribute;
+		CanonicalUser user;
+
+		acp = new Acp();
+
+		builder = new SAXBuilder();
+
+		try {
+			document = builder.build(xml);
+
+			accessControlPolicyElement = document.getRootElement();
+
+			if (!(ELEMENT_ACCESS_CONTROL_POLICY
+					.equals(accessControlPolicyElement.getName()))) {
+				// TODO: indicate error
+
+				System.out.println("Constant ELEMENT_ACCESS_CONTROL_POLICY: "
+						+ ELEMENT_ACCESS_CONTROL_POLICY);
+				System.out.println("accessControlPolicyElement.getName(): "
+						+ accessControlPolicyElement.getName());
+
+				throw new IOException("Invalid root element: "
+						+ accessControlPolicyElement);
+			}
+
+			if ((ownerElement = accessControlPolicyElement
+					.getChild(ELEMENT_OWNER)) == null) {
+				throw new IOException(
+						"Invalid XML. Should have 'Owner' element");
+			}
+
+			if ((idElement = ownerElement.getChild(ELEMENT_ID)) == null) {
+				throw new IOException("Invalid XML. Should have 'ID' element");
+			}
+
+			user = new CanonicalUser(idElement.getText());
+
+			if ((displayNameElement = ownerElement
+					.getChild(ELEMENT_DISPLAY_NAME)) != null) {
+				user.setDisplayName(displayNameElement.getText());
+			}
+
+			acp.setOwner(user);
+
+			if ((accessControlListElement = accessControlPolicyElement
+					.getChild(ELEMENT_ACCESS_CONTROL_LIST)) == null) {
+				throw new IOException(
+						"Invalid XML. Should have 'AccessControlList' element");
+			}
+
+			for (Iterator grants = accessControlListElement.getChildren(
+					ELEMENT_GRANT).iterator(); grants.hasNext();) {
+				Grantee grantee;
+
+				grantElement = (Element) grants.next();
+				if ((granteeElement = grantElement.getChild(ELEMENT_GRANTEE)) == null) {
+					throw new IOException(
+							"Invalid XML. Should have 'Grantee' element");
+				}
+				if ((permissionElement = grantElement
+						.getChild(ELEMENT_PERMISSION)) == null) {
+					throw new IOException(
+							"Invalid XML. Should have 'Permission' element");
+				}
+
+				if ((typeAttribute = granteeElement.getAttribute(
+						ATTRIBUTE_TYPE, NAMESPACE_XSI)) == null) {
+					throw new IOException(
+							"Invalid XML. Should have 'type' attribute");
+				}
+				String typeValue = typeAttribute.getValue();
+				if (ATTRIBUTE_TYPE_VALUE_CANONICAL_USER.equals(typeValue)) {
+					if ((idElement = granteeElement.getChild(ELEMENT_ID)) == null) {
+						throw new IOException(
+								"Invalid XML. Should have 'ID' element");
+					}
+
+					user = new CanonicalUser(idElement.getText());
+
+					if ((displayNameElement = granteeElement
+							.getChild(ELEMENT_DISPLAY_NAME)) != null) {
+						user.setDisplayName(displayNameElement.getText());
+					}
+
+					grantee = user;
+				} else if (ATTRIBUTE_TYPE_VALUE_GROUP.equals(typeValue)) {
+					if ((uriElement = granteeElement.getChild(ELEMENT_URI)) == null) {
+						throw new IOException(
+								"Invalid XML. Should have 'URI' element");
+					}
+
+					String uriValue = uriElement.getValue();
+					if (AllUsersGroup.URI_STRING.equals(uriValue)) {
+						grantee = AllUsersGroup.getInstance();
+					} else if (AuthenticatedUsersGroup.URI_STRING
+							.equals(uriValue)) {
+						grantee = AuthenticatedUsersGroup.getInstance();
+					} else {
+						throw new IOException("Unknown group uri: " + uriValue);
+					}
+				} else {
+					throw new IOException("Unknown type: " + typeValue);
+				}
+
+				try {
+					acp.grant(grantee, permissionElement.getValue());
+				} catch (IllegalArgumentException e) {
+					IOException ex = new IOException("Invalid permission: "
+							+ permissionElement.getValue());
+					ex.initCause(e);
+					throw ex;
+				}
+			}
+		} catch (JDOMException e) {
+			IOException ex = new IOException(e.getMessage());
+			ex.initCause(e);
+			throw ex;
+		}
+
+		return acp;
 	}
 }

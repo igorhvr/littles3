@@ -28,6 +28,12 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>jdom</groupId>
+      <artifactId>jdom</artifactId>
+      <version>1.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>je</groupId>
       <artifactId>je</artifactId>
       <version>3.2.23</version>
@@ -87,6 +93,14 @@
       <version>2.0.6</version>
       <scope>compile</scope>
     </dependency>
+    <!-- DELETE THIS
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+      <version>2.8.1</version>
+      <scope>compile</scope>
+    </dependency>
+    -->
   </dependencies>
 
   <!-- Build Settings -->
