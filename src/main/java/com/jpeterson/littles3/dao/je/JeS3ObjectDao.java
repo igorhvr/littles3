@@ -169,7 +169,7 @@ public class JeS3ObjectDao implements S3ObjectDao {
 
 			database = jeCentral.getDatabase(JeCentral.OBJECT_DB_NAME);
 
-			database.putNoOverwrite(null, theKey, theData);
+			database.put(null, theKey, theData);
 		} catch (DatabaseException e) {
 			throw new DataAccessResourceFailureException(
 					"Unable to store a database record", e);

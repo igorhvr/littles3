@@ -18,7 +18,6 @@ package com.jpeterson.littles3.service.impl;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -64,7 +63,7 @@ public class FileStorageServiceImpl implements StorageService {
 	}
 
 	public S3Object createS3Object(Bucket bucket, String key,
-			CanonicalUser owner) throws IOException, AccessControlException {
+			CanonicalUser owner) throws IOException {
 		String guid;
 		File storageFile;
 		Acp acp;
@@ -72,8 +71,6 @@ public class FileStorageServiceImpl implements StorageService {
 
 		logger.debug("Creating S3Object for bucket[" + bucket.getName()
 				+ "] + key[" + key + "]");
-
-		bucket.canWrite(owner);
 
 		String bucketPath = generateBucketPath(bucket.getName()).toString();
 		File bucketDirectory = new File(bucketPath);
@@ -97,21 +94,14 @@ public class FileStorageServiceImpl implements StorageService {
 		return s3Object;
 	}
 
-	public S3Object load(String bucket, String key)
-			throws DataAccessException {
+	public S3Object load(String bucket, String key) throws DataAccessException {
 		S3Object object = s3ObjectDao.loadS3Object(bucket, key);
 
 		return object;
 	}
 
-	public void store(S3Object s3Object, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException {
+	public void store(S3Object s3Object) throws DataAccessException {
 		Acp acp;
-		Bucket bucket;
-
-		bucket = bucketDao.loadBucket(s3Object.getBucket());
-
-		bucket.canWrite(requestor);
 
 		acp = s3Object.getAcp();
 		if (acp.size() == 0) {
@@ -122,14 +112,7 @@ public class FileStorageServiceImpl implements StorageService {
 		s3ObjectDao.storeS3Object(s3Object);
 	}
 
-	public void remove(S3Object s3Object, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException {
-		Bucket bucket;
-
-		bucket = bucketDao.loadBucket(s3Object.getBucket());
-
-		bucket.canWrite(requestor);
-
+	public void remove(S3Object s3Object) throws DataAccessException {
 		s3ObjectDao.removeS3Object(s3Object);
 		s3Object.deleteData();
 	}
@@ -165,8 +148,7 @@ public class FileStorageServiceImpl implements StorageService {
 		return bucketDao.loadBucket(name);
 	}
 
-	public void storeBucket(Bucket bucket, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException {
+	public void storeBucket(Bucket bucket) throws DataAccessException {
 		Acp acp;
 
 		acp = bucket.getAcp();
@@ -175,21 +157,13 @@ public class FileStorageServiceImpl implements StorageService {
 			acp.grant(acp.getOwner(), ResourcePermission.ACTION_FULL_CONTROL);
 		}
 
-		bucket.canWrite(requestor);
-
 		bucketDao.storeBucket(bucket);
 	}
 
-	public void deleteBucket(Bucket bucket, CanonicalUser requestor)
-			throws IOException, AccessControlException {
+	public void deleteBucket(Bucket bucket) throws IOException {
 		File bucketDirectory;
 
 		logger.debug("Request to delete bucket: " + bucket.getName());
-
-		if (!requestor.equals(bucket.getAcp().getOwner())) {
-			throw new AccessControlException(
-					"Only the owner can delete a bucket");
-		}
 
 		bucketDirectory = new File(generateBucketPath(bucket.getName())
 				.toString());
@@ -256,9 +230,7 @@ public class FileStorageServiceImpl implements StorageService {
 	}
 
 	public String listKeys(Bucket bucket, String prefix, String marker,
-			String delimiter, int maxKeys, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException {
-		bucket.canRead(requestor);
+			String delimiter, int maxKeys) throws DataAccessException {
 		return s3ObjectDao.listKeys(bucket.getName(), prefix, marker,
 				delimiter, maxKeys);
 	}

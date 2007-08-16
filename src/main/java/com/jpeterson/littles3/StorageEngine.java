@@ -508,6 +508,8 @@ public class StorageEngine extends FrameworkServlet {
 					out.close();
 					out = null;
 				} else {
+					Bucket bucket;
+
 					prefix = req.getParameter("prefix");
 					if (prefix == null) {
 						prefix = "";
@@ -524,9 +526,24 @@ public class StorageEngine extends FrameworkServlet {
 
 					delimiter = req.getParameter("delimiter");
 
-					response = storageService.listKeys(storageService
-							.loadBucket(or.getBucket()), prefix, marker,
-							delimiter, maxKeys, or.getRequestor());
+					try {
+						bucket = storageService.loadBucket(or.getBucket());
+					} catch (DataAccessException e) {
+						resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchBucket");
+						return;
+					}
+
+					try {
+						bucket.canRead(or.getRequestor());
+					} catch (AccessControlException e) {
+						resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+						return;
+					}
+
+					response = storageService.listKeys(bucket, prefix, marker,
+							delimiter, maxKeys);
 
 					resp.setContentLength(response.length());
 					resp.setContentType("application/xml");
@@ -630,137 +647,230 @@ public class StorageEngine extends FrameworkServlet {
 				storageService = (StorageService) getWebApplicationContext()
 						.getBean("storageService");
 
-				// make sure requestor can "WRITE" to the bucket
-				try {
-					bucket = storageService.loadBucket(bucketName);
-				} catch (DataAccessException e) {
-					resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-							"NoSuchBucket");
-					return;
-				}
+				if (req.getParameter(PARAMETER_ACL) != null) {
+					// write access control policy
+					Acp acp;
+					CanonicalUser owner;
+					s3Object = storageService.load(bucketName, key);
 
-				try {
-					oldS3Object = storageService.load(bucket.getName(), key);
-				} catch (DataRetrievalFailureException e) {
-					// ignore
-				}
-
-				// create a new S3Object for this request to store an object
-				try {
-					s3Object = storageService.createS3Object(bucket, key,
-							requestor);
-				} catch (DataAccessException e) {
-					resp.sendError(HttpServletResponse.SC_NOT_FOUND,
-							"NoSuchBucket");
-					return;
-				} catch (AccessControlException e) {
-					resp.sendError(HttpServletResponse.SC_FORBIDDEN,
-							"AccessDenied");
-					return;
-				}
-
-				out = s3Object.getOutputStream();
-				digestOutputStream = new DigestOutputStream(out, messageDigest);
-
-				// Used instead of req.getContentLength(); because Amazon
-				// limit is 5 gig, which is bigger than an int
-				value = req.getHeader("Content-Length");
-				if (value == null) {
-					resp.sendError(HttpServletResponse.SC_LENGTH_REQUIRED,
-							"MissingContentLength");
-					return;
-				}
-				contentLength = Long.valueOf(value).longValue();
-
-				if (contentLength > 5368709120L) {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
-							"EntityTooLarge");
-					return;
-				}
-
-				long written = 0;
-				int count;
-				byte[] b = new byte[4096];
-				ServletInputStream in = req.getInputStream();
-
-				while (((count = in.read(b, 0, b.length)) > 0)
-						&& (written < contentLength)) {
-					digestOutputStream.write(b, 0, count);
-					written += count;
-				}
-				digestOutputStream.flush();
-
-				if (written != contentLength) {
-					// transmission truncated
-					if (out != null) {
-						out.close();
-						out = null;
+					if (s3Object == null) {
+						resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchKey");
+						return;
 					}
-					if (digestOutputStream != null) {
-						digestOutputStream.close();
-						digestOutputStream = null;
+
+					acp = s3Object.getAcp();
+					try {
+						acp.canWrite(requestor);
+					} catch (AccessControlException e) {
+						resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+						return;
 					}
-					// clean up
-					storageService.remove(s3Object, requestor);
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
-							"IncompleteBody");
-					return;
+
+					// save owner
+					owner = acp.getOwner();
+
+					try {
+						acp = Acp.decode(req.getInputStream());
+					} catch (IOException e) {
+						e.printStackTrace();
+						resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+								"MalformedACLError");
+						return;
+					}
+
+					// maintain owner
+					acp.setOwner(owner);
+
+					s3Object.setAcp(acp);
+
+					storageService.store(s3Object);
+				} else {
+					// make sure requestor can "WRITE" to the bucket
+					try {
+						bucket = storageService.loadBucket(bucketName);
+						bucket.canWrite(requestor);
+					} catch (AccessControlException e) {
+						resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+						return;
+					} catch (DataAccessException e) {
+						resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchBucket");
+						return;
+					}
+
+					try {
+						oldS3Object = storageService
+								.load(bucket.getName(), key);
+					} catch (DataRetrievalFailureException e) {
+						// ignore
+					}
+
+					// create a new S3Object for this request to store an object
+					try {
+						s3Object = storageService.createS3Object(bucket, key,
+								requestor);
+					} catch (DataAccessException e) {
+						resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchBucket");
+						return;
+					}
+
+					out = s3Object.getOutputStream();
+					digestOutputStream = new DigestOutputStream(out,
+							messageDigest);
+
+					// Used instead of req.getContentLength(); because Amazon
+					// limit is 5 gig, which is bigger than an int
+					value = req.getHeader("Content-Length");
+					if (value == null) {
+						resp.sendError(HttpServletResponse.SC_LENGTH_REQUIRED,
+								"MissingContentLength");
+						return;
+					}
+					contentLength = Long.valueOf(value).longValue();
+
+					if (contentLength > 5368709120L) {
+						resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+								"EntityTooLarge");
+						return;
+					}
+
+					long written = 0;
+					int count;
+					byte[] b = new byte[4096];
+					ServletInputStream in = req.getInputStream();
+
+					while (((count = in.read(b, 0, b.length)) > 0)
+							&& (written < contentLength)) {
+						digestOutputStream.write(b, 0, count);
+						written += count;
+					}
+					digestOutputStream.flush();
+
+					if (written != contentLength) {
+						// transmission truncated
+						if (out != null) {
+							out.close();
+							out = null;
+						}
+						if (digestOutputStream != null) {
+							digestOutputStream.close();
+							digestOutputStream = null;
+						}
+						// clean up
+						storageService.remove(s3Object);
+						resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+								"IncompleteBody");
+						return;
+					}
+
+					s3Object.setContentDisposition(req
+							.getHeader("Content-Disposition"));
+					s3Object.setContentLength(contentLength);
+					s3Object.setContentMD5(req.getHeader("Content-MD5"));
+					value = req.getContentType();
+					logger.debug("Put - Content-Type: " + value);
+					if (value == null) {
+						value = S3Object.DEFAULT_CONTENT_TYPE;
+					}
+					s3Object.setContentType(value);
+					logger.debug("Put - get content-type: "
+							+ s3Object.getContentType());
+					s3Object.setLastModified(System.currentTimeMillis());
+
+					// calculate ETag, hex encoding of MD5
+					value = new String(Hex.encodeHex(digestOutputStream
+							.getMessageDigest().digest()));
+					resp.setHeader("ETag", value);
+					s3Object.setETag(value);
+
+					grantCannedAccessPolicies(req, s3Object.getAcp(), requestor);
+
+					// NOTE: This could be reengineered to have a two-phase
+					// commit.
+					if (oldS3Object != null) {
+						storageService.remove(oldS3Object);
+					}
+					storageService.store(s3Object);
 				}
-
-				s3Object.setContentDisposition(req
-						.getHeader("Content-Disposition"));
-				s3Object.setContentLength(contentLength);
-				s3Object.setContentMD5(req.getHeader("Content-MD5"));
-				value = req.getContentType();
-				logger.debug("Put - Content-Type: " + value);
-				if (value == null) {
-					value = S3Object.DEFAULT_CONTENT_TYPE;
-				}
-				s3Object.setContentType(value);
-				logger.debug("Put - get content-type: "
-						+ s3Object.getContentType());
-				s3Object.setLastModified(System.currentTimeMillis());
-
-				// calculate ETag, hex encoding of MD5
-				value = new String(Hex.encodeHex(digestOutputStream
-						.getMessageDigest().digest()));
-				resp.setHeader("ETag", value);
-				s3Object.setETag(value);
-
-				grantCannedAccessPolicies(req, s3Object.getAcp(), requestor);
-
-				// NOTE: This could be reengineered to have a two-phase commit.
-				if (oldS3Object != null) {
-					storageService.remove(oldS3Object, requestor);
-				}
-				storageService.store(s3Object, requestor);
 			} else if (or.getBucket() != null) {
 				StorageService storageService;
 				Bucket bucket;
 
-				// validate bucket
-				String bucketName = or.getBucket();
-
-				if (!isValidBucketName(bucketName)) {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
-							"InvalidBucketName");
-					return;
-				}
-
 				storageService = (StorageService) getWebApplicationContext()
 						.getBean("storageService");
 
-				try {
-					bucket = storageService.createBucket(bucketName, requestor);
-				} catch (BucketAlreadyExistsException e) {
-					resp.sendError(HttpServletResponse.SC_CONFLICT,
-							"BucketAlreadyExists");
-					return;
+				if (req.getParameter(PARAMETER_ACL) != null) {
+					// write access control policy
+					Acp acp;
+					CanonicalUser owner;
+					
+					System.out.println("User is providing new ACP for bucket " + or.getBucket());
+
+					try {
+						bucket = storageService.loadBucket(or.getBucket());
+					} catch (DataAccessException e) {
+						resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchBucket");
+						return;
+					}
+
+					acp = bucket.getAcp();
+					try {
+						acp.canWrite(requestor);
+					} catch (AccessControlException e) {
+						resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+						return;
+					}
+
+					// save owner
+					owner = acp.getOwner();
+
+					try {
+						acp = Acp.decode(req.getInputStream());
+					} catch (IOException e) {
+						e.printStackTrace();
+						resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+								"MalformedACLError");
+						return;
+					}
+
+					// maintain owner
+					acp.setOwner(owner);
+
+					bucket.setAcp(acp);
+					
+					System.out.println("Saving bucket ACP");
+					System.out.println("ACP: " + Acp.encode(bucket.getAcp()));
+
+					storageService.storeBucket(bucket);
+				} else {
+					// validate bucket
+					String bucketName = or.getBucket();
+
+					if (!isValidBucketName(bucketName)) {
+						resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+								"InvalidBucketName");
+						return;
+					}
+
+					try {
+						bucket = storageService.createBucket(bucketName,
+								requestor);
+					} catch (BucketAlreadyExistsException e) {
+						resp.sendError(HttpServletResponse.SC_CONFLICT,
+								"BucketAlreadyExists");
+						return;
+					}
+
+					grantCannedAccessPolicies(req, bucket.getAcp(), requestor);
+
+					storageService.storeBucket(bucket);
 				}
-
-				grantCannedAccessPolicies(req, bucket.getAcp(), requestor);
-
-				storageService.storeBucket(bucket, requestor);
 			}
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
@@ -803,24 +913,42 @@ public class StorageEngine extends FrameworkServlet {
 		CanonicalUser requestor = or.getRequestor();
 
 		if (or.getKey() != null) {
+			Bucket bucket;
 			S3Object s3Object;
 			StorageService storageService;
 
 			storageService = (StorageService) getWebApplicationContext()
 					.getBean("storageService");
 
+			// make sure requestor can "WRITE" to the bucket
 			try {
-				s3Object = storageService.load(or.getBucket(), or.getKey());
+				bucket = storageService.loadBucket(or.getBucket());
+				bucket.canWrite(requestor);
+			} catch (AccessControlException e) {
+				resp
+						.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+				return;
+			} catch (DataAccessException e) {
+				resp
+						.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchBucket");
+				return;
+			}
+
+			try {
+				s3Object = storageService.load(bucket.getName(), or.getKey());
 			} catch (DataRetrievalFailureException e) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "NoSuchKey");
 				return;
 			}
-			storageService.remove(s3Object, requestor);
+			storageService.remove(s3Object);
 
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 			return;
 		} else if (or.getBucket() != null) {
 			StorageService storageService;
+			Bucket bucket;
 
 			// validate bucket
 			String bucketName = or.getBucket();
@@ -829,8 +957,23 @@ public class StorageEngine extends FrameworkServlet {
 					.getBean("storageService");
 
 			try {
-				storageService.deleteBucket(storageService
-						.loadBucket(bucketName), requestor);
+				bucket = storageService.loadBucket(bucketName);
+			} catch (DataAccessException e) {
+				resp
+						.sendError(HttpServletResponse.SC_NOT_FOUND,
+								"NoSuchBucket");
+				return;
+			}
+
+			if (!requestor.equals(bucket.getAcp().getOwner())) {
+				resp
+						.sendError(HttpServletResponse.SC_FORBIDDEN,
+								"AccessDenied");
+				return;
+			}
+
+			try {
+				storageService.deleteBucket(bucket);
 			} catch (BucketNotEmptyException e) {
 				resp.sendError(HttpServletResponse.SC_CONFLICT,
 						"BucketNotEmpty");

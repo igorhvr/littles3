@@ -17,7 +17,6 @@
 package com.jpeterson.littles3.service;
 
 import java.io.IOException;
-import java.security.AccessControlException;
 import java.util.List;
 
 import org.springframework.dao.DataAccessException;
@@ -48,7 +47,7 @@ public interface StorageService {
 	 *             permission to the bucket.
 	 */
 	public S3Object createS3Object(Bucket bucket, String key,
-			CanonicalUser owner) throws IOException, AccessControlException;
+			CanonicalUser owner) throws IOException;
 
 	/**
 	 * Load an S3Object.
@@ -63,14 +62,11 @@ public interface StorageService {
 	 *             <code>bucket</code> and <code>key</code>.
 	 * @throws DataAccessException
 	 */
-	public S3Object load(String bucket, String key) throws DataAccessException,
-			AccessControlException;
+	public S3Object load(String bucket, String key) throws DataAccessException;
 
-	public void store(S3Object s3Object, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException;
+	public void store(S3Object s3Object) throws DataAccessException;
 
-	public void remove(S3Object s3Object, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException;
+	public void remove(S3Object s3Object) throws DataAccessException;
 
 	public void setS3ObjectDao(S3ObjectDao s3ObjectDao);
 
@@ -91,8 +87,7 @@ public interface StorageService {
 
 	public Bucket loadBucket(String name) throws DataAccessException;
 
-	public void storeBucket(Bucket bucket, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException;
+	public void storeBucket(Bucket bucket) throws DataAccessException;
 
 	/**
 	 * Delete a bucket.
@@ -104,8 +99,7 @@ public interface StorageService {
 	 * @throws IOException
 	 *             Unable to delete bucket.
 	 */
-	public void deleteBucket(Bucket bucket, CanonicalUser requestor)
-			throws IOException, AccessControlException;
+	public void deleteBucket(Bucket bucket) throws IOException;
 
 	/**
 	 * Find the buckets for a user.
@@ -119,8 +113,7 @@ public interface StorageService {
 	public List<Bucket> findBuckets(String username) throws IOException;
 
 	public String listKeys(Bucket bucket, String prefix, String marker,
-			String delimiter, int maxKeys, CanonicalUser requestor)
-			throws DataAccessException, AccessControlException;
+			String delimiter, int maxKeys) throws DataAccessException;
 
 	public void setBucketDao(BucketDao bucketDao);
 }

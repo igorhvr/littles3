@@ -110,7 +110,7 @@ public class JeBucketDao implements BucketDao {
 
 			database = jeCentral.getDatabase(JeCentral.BUCKET_DB_NAME);
 
-			database.putNoOverwrite(null, theKey, theData);
+			database.put(null, theKey, theData);
 		} catch (DatabaseException e) {
 			throw new DataAccessResourceFailureException(
 					"Unable to load a database record", e);
