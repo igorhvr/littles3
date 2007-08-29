@@ -298,62 +298,71 @@ public class JeS3ObjectDao implements S3ObjectDao {
 					s3ObjectBucketKey = (S3Object) s3ObjectBucketKeyBinding
 							.entryToObject(theKey);
 
-					key = s3ObjectBucketKey.getKey();
-					if (key.equals(marker)) {
-						// skip to next result after the marker
-						if ((operationStatus = cursor.getNext(theKey, theData,
-								LockMode.DEFAULT)) != OperationStatus.SUCCESS) {
-							key = s3ObjectBucketKey.getKey();
+					if (bucket.equals(s3ObjectBucketKey.getBucket())) {
+						key = s3ObjectBucketKey.getKey();
+						if (logger.isTraceEnabled()) {
+							logger.trace("bucket: "
+									+ s3ObjectBucketKey.getBucket() + " key: "
+									+ key);
 						}
-					}
-
-					// restrict to results that begin with the prefix
-					while ((operationStatus == OperationStatus.SUCCESS)
-							&& key.startsWith(prefix)) {
-						if (results >= maxKeys) {
-							truncated = true;
-							break;
-						}
-
-						// valid result
-						o = (S3Object) fileS3ObjectBinding
-								.entryToObject(theData);
-
-						// is it a content or a common prefix?
-						processed = false;
-						if (delimiter != null) {
-							key = o.getKey();
-							if ((delimiterIndex = key.indexOf(delimiter,
-									prefixLength)) != -1) {
-								// include the delimiter in the common prefix
-								currentPrefix = key.substring(0, delimiterIndex
-										+ delimiter.length());
-								if (currentPrefix.equals(commonPrefix)) {
-									// skip common prefix
-									processed = true;
-								} else {
-									// new common prefix
-									commonPrefix = currentPrefix;
-									commonPrefixes.add(commonPrefix);
-									++results;
-									processed = true;
-								}
+						if (key.equals(marker)) {
+							// skip to next result after the marker
+							if ((operationStatus = cursor.getNext(theKey,
+									theData, LockMode.DEFAULT)) != OperationStatus.SUCCESS) {
+								key = s3ObjectBucketKey.getKey();
 							}
 						}
-						if (!processed) {
-							contents.add(o);
-							++results;
-							processed = true;
-						}
 
-						if ((operationStatus = cursor.getNext(theKey, theData,
-								LockMode.DEFAULT)) != OperationStatus.SUCCESS) {
-							break;
-						}
+						// restrict to results that begin with the prefix
+						while ((operationStatus == OperationStatus.SUCCESS)
+								&& key.startsWith(prefix)) {
+							if (results >= maxKeys) {
+								truncated = true;
+								break;
+							}
 
-						s3ObjectBucketKey = (S3Object) s3ObjectBucketKeyBinding
-								.entryToObject(theKey);
-						key = s3ObjectBucketKey.getKey();
+							// valid result
+							o = (S3Object) fileS3ObjectBinding
+									.entryToObject(theData);
+
+							// is it a content or a common prefix?
+							processed = false;
+							if (delimiter != null) {
+								key = o.getKey();
+								if ((delimiterIndex = key.indexOf(delimiter,
+										prefixLength)) != -1) {
+									// include the delimiter in the common
+									// prefix
+									currentPrefix = key
+											.substring(0, delimiterIndex
+													+ delimiter.length());
+									if (currentPrefix.equals(commonPrefix)) {
+										// skip common prefix
+										processed = true;
+									} else {
+										// new common prefix
+										commonPrefix = currentPrefix;
+										commonPrefixes.add(commonPrefix);
+										++results;
+										processed = true;
+									}
+								}
+							}
+							if (!processed) {
+								contents.add(o);
+								++results;
+								processed = true;
+							}
+
+							if ((operationStatus = cursor.getNext(theKey,
+									theData, LockMode.DEFAULT)) != OperationStatus.SUCCESS) {
+								break;
+							}
+
+							s3ObjectBucketKey = (S3Object) s3ObjectBucketKeyBinding
+									.entryToObject(theKey);
+							key = s3ObjectBucketKey.getKey();
+						}
 					}
 				}
 			} catch (DatabaseException e) {

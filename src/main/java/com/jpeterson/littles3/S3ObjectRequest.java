@@ -18,11 +18,22 @@ package com.jpeterson.littles3;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.security.Principal;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.httpclient.util.DateParseException;
+import org.apache.commons.httpclient.util.DateUtil;
+
+import com.jpeterson.littles3.bo.Authenticator;
+import com.jpeterson.littles3.bo.AuthenticatorException;
 import com.jpeterson.littles3.bo.CanonicalUser;
+import com.jpeterson.littles3.bo.HackAuthenticator;
+import com.jpeterson.littles3.bo.S3Authenticator;
 
 /**
  * Data structure for parsing an S3 object request.
@@ -37,6 +48,12 @@ public class S3ObjectRequest {
 	private String key;
 
 	private CanonicalUser requestor;
+
+	private String stringToSign;
+
+	private Date timestamp;
+
+	private static final String PARAMETER_ACL = "acl";
 
 	/**
 	 * Empty constructor.
@@ -60,15 +77,20 @@ public class S3ObjectRequest {
 	 *             Invalid request.
 	 */
 	public static S3ObjectRequest create(HttpServletRequest req, String baseHost)
-			throws IllegalArgumentException {
+			throws IllegalArgumentException, AuthenticatorException {
 		S3ObjectRequest o = new S3ObjectRequest();
 		String pathInfo = req.getPathInfo();
+		String contextPath = req.getContextPath();
+		String requestURI = req.getRequestURI();
+		String undecodedPathPart = null;
 		int pathInfoLength;
 		String requestURL;
 		String serviceEndpoint;
 		String bucket = null;
 		String key = null;
 		String host;
+		String value;
+		String timestamp;
 
 		baseHost = baseHost.toLowerCase();
 
@@ -100,6 +122,11 @@ public class S3ObjectRequest {
 		serviceEndpoint = requestURL.substring(0, requestURL.length()
 				- pathInfoLength);
 
+		System.out.println("---------------");
+		System.out.println("requestURI: " + requestURI);
+		System.out.println("serviceEndpoint: " + serviceEndpoint);
+		System.out.println("---------------");
+
 		if ((host == null) || // http 1.0 form
 				(host.equals(baseHost))) { // ordinary method
 			// http 1.0 form
@@ -112,6 +139,9 @@ public class S3ObjectRequest {
 
 					if (pathInfoLength > (index + 1)) {
 						key = pathInfo.substring(index + 1);
+						undecodedPathPart = requestURI.substring(contextPath
+								.length()
+								+ 1 + bucket.length(), requestURI.length());
 					}
 				} else {
 					bucket = pathInfo.substring(1);
@@ -123,6 +153,8 @@ public class S3ObjectRequest {
 			bucket = host.substring(0, host.length() - 1 - baseHost.length());
 			if (pathInfoLength > 1) {
 				key = pathInfo.substring(1);
+				undecodedPathPart = requestURI.substring(contextPath.length(),
+						requestURI.length());
 			}
 		} else {
 			// bucket is host
@@ -130,13 +162,110 @@ public class S3ObjectRequest {
 			bucket = host;
 			if (pathInfoLength > 1) {
 				key = pathInfo.substring(1);
+				undecodedPathPart = requestURI.substring(contextPath.length(),
+						requestURI.length());
 			}
 		}
+
+		// timestamp
+		timestamp = req.getHeader("Date");
+
+		// CanonicalizedResource
+		StringBuffer canonicalizedResource = new StringBuffer();
+
+		canonicalizedResource.append('/');
+		if (bucket != null) {
+			canonicalizedResource.append(bucket);
+		}
+		if (undecodedPathPart != null) {
+			canonicalizedResource.append(undecodedPathPart);
+		}
+		if (req.getParameter(PARAMETER_ACL) != null) {
+			canonicalizedResource.append("?").append(PARAMETER_ACL);
+		}
+
+		// CanonicalizedAmzHeaders
+		StringBuffer canonicalizedAmzHeaders = new StringBuffer();
+		Map<String, String> headers = new TreeMap<String, String>();
+		String headerName;
+		String headerValue;
+
+		for (Enumeration headerNames = req.getHeaderNames(); headerNames
+				.hasMoreElements();) {
+			headerName = ((String) headerNames.nextElement()).toLowerCase();
+
+			if (headerName.startsWith("x-amz-")) {
+				for (Enumeration headerValues = req.getHeaders(headerName); headerValues
+						.hasMoreElements();) {
+					headerValue = (String) headerValues.nextElement();
+					String currentValue = headers.get(headerValue);
+
+					if (currentValue != null) {
+						// combine header fields with the same name
+						headers.put(headerName, currentValue + ","
+								+ headerValue);
+					} else {
+						headers.put(headerName, headerValue);
+					}
+
+					if (headerName.equals("x-amz-date")) {
+						timestamp = headerValue;
+					}
+				}
+			}
+		}
+
+		for (Iterator<String> iter = headers.keySet().iterator(); iter
+				.hasNext();) {
+			headerName = iter.next();
+			headerValue = headers.get(headerName);
+			canonicalizedAmzHeaders.append(headerName).append(":").append(
+					headerValue).append("\n");
+		}
+
+		StringBuffer stringToSign = new StringBuffer();
+
+		stringToSign.append(req.getMethod()).append("\n");
+		value = req.getHeader("Content-MD5");
+		if (value != null) {
+			stringToSign.append(value);
+		}
+		stringToSign.append("\n");
+		value = req.getHeader("Content-Type");
+		if (value != null) {
+			stringToSign.append(value);
+		}
+		stringToSign.append("\n");
+		value = req.getHeader("Date");
+		if (value != null) {
+			stringToSign.append(value);
+		}
+		stringToSign.append("\n");
+		stringToSign.append(canonicalizedAmzHeaders);
+		stringToSign.append(canonicalizedResource);
+
+		System.out.println(":v:v:v:v:");
+		System.out.println("undecodedPathPart: " + undecodedPathPart);
+		System.out.println("canonicalizedAmzHeaders: "
+				+ canonicalizedAmzHeaders);
+		System.out.println("canonicalizedResource: " + canonicalizedResource);
+		System.out.println("stringToSign: " + stringToSign);
+		System.out.println(":^:^:^:^:");
 
 		o.setServiceEndpoint(serviceEndpoint);
 		o.setBucket(bucket);
 		o.setKey(key);
-		o.setRequestor(requestor(req));
+		try {
+			if (timestamp == null) {
+				o.setTimestamp(null);
+			} else {
+				o.setTimestamp(DateUtil.parseDate(timestamp));
+			}
+		} catch (DateParseException e) {
+			o.setTimestamp(null);
+		}
+		o.setStringToSign(stringToSign.toString());
+		o.setRequestor(authenticate(req, o));
 
 		return o;
 	}
@@ -219,6 +348,44 @@ public class S3ObjectRequest {
 		this.requestor = requestor;
 	}
 
+	/**
+	 * The "String to Sign". Used in authentication.
+	 * 
+	 * @return The "String to Sign".
+	 */
+	public String getStringToSign() {
+		return stringToSign;
+	}
+
+	/**
+	 * Set the "String to Sign". Used in authentication.
+	 * 
+	 * @param stringToSign
+	 *            The "String to Sign".
+	 */
+	public void setStringToSign(String stringToSign) {
+		this.stringToSign = stringToSign;
+	}
+
+	/**
+	 * The request timestamp.
+	 * 
+	 * @return The request timestamp.
+	 */
+	public Date getTimestamp() {
+		return timestamp;
+	}
+
+	/**
+	 * Set the request timestamp.
+	 * 
+	 * @param timestamp
+	 *            The request timestamp
+	 */
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
+	}
+
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
 
@@ -240,25 +407,19 @@ public class S3ObjectRequest {
 	 *         <code>CanonicalUser</code> with an id of the user principal
 	 *         name if the request is authenticated or an "anonymous"
 	 *         <code>Canonicaluser</code> is the request is non authenticated.
+	 * @throws AuthenticatorException
+	 *             Unable to authenticate the request.
 	 */
-	public static CanonicalUser requestor(HttpServletRequest req) {
-		Principal authenticatedUser = req.getUserPrincipal();
+	public static CanonicalUser authenticate(HttpServletRequest req,
+			S3ObjectRequest o) throws AuthenticatorException {
 		// TODO: remove hack
-		boolean hack = true;
-
-		if (hack) {
-			String username = req.getHeader("x-hack-user");
-			if (username != null) {
-				System.out.println("HACK! USING USERNAME FROM HEADER: "
-						+ username);
-				return new CanonicalUser(username);
-			}
+		try {
+			Authenticator hackAuthenticator = new HackAuthenticator();
+			return hackAuthenticator.authenticate(req, o);
+		} catch (AuthenticatorException e) {
+			// ignore
 		}
 
-		if (authenticatedUser == null) {
-			return new CanonicalUser(CanonicalUser.ID_ANONYMOUS);
-		} else {
-			return new CanonicalUser(authenticatedUser.getName());
-		}
+		return new S3Authenticator().authenticate(req, o);
 	}
 }

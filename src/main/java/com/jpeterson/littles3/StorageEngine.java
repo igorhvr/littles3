@@ -48,10 +48,15 @@ import org.springframework.web.servlet.FrameworkServlet;
 import com.jpeterson.littles3.bo.Acp;
 import com.jpeterson.littles3.bo.AllUsersGroup;
 import com.jpeterson.littles3.bo.AuthenticatedUsersGroup;
+import com.jpeterson.littles3.bo.AuthenticatorException;
 import com.jpeterson.littles3.bo.Bucket;
 import com.jpeterson.littles3.bo.CanonicalUser;
+import com.jpeterson.littles3.bo.InvalidAccessKeyIdException;
+import com.jpeterson.littles3.bo.InvalidSecurityException;
+import com.jpeterson.littles3.bo.RequestTimeTooSkewedException;
 import com.jpeterson.littles3.bo.ResourcePermission;
 import com.jpeterson.littles3.bo.S3Object;
+import com.jpeterson.littles3.bo.SignatureDoesNotMatchException;
 import com.jpeterson.littles3.dao.je.JeCentral;
 import com.jpeterson.littles3.service.BucketAlreadyExistsException;
 import com.jpeterson.littles3.service.BucketNotEmptyException;
@@ -327,8 +332,37 @@ public class StorageEngine extends FrameworkServlet {
 		}
 
 		try {
-			S3ObjectRequest or = S3ObjectRequest.create(req, configuration
-					.getString(CONFIG_HOST));
+			S3ObjectRequest or;
+
+			try {
+				or = S3ObjectRequest.create(req, configuration
+						.getString(CONFIG_HOST));
+			} catch (InvalidAccessKeyIdException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"InvalidAccessKeyId");
+				return;
+			} catch (InvalidSecurityException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"InvalidSecurity");
+				return;
+			} catch (RequestTimeTooSkewedException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"RequestTimeTooSkewed");
+				return;
+			} catch (SignatureDoesNotMatchException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"SignatureDoesNotMatch");
+				return;
+			} catch (AuthenticatorException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"InvalidSecurity");
+				return;
+			}
 
 			if (or.getKey() != null) {
 				S3Object s3Object;
@@ -551,6 +585,9 @@ public class StorageEngine extends FrameworkServlet {
 
 					Writer out = resp.getWriter();
 					out.write(response);
+					if (logger.isTraceEnabled()) {
+						logger.trace("Response: " + response);
+					}
 				}
 				return;
 			} else {
@@ -620,8 +657,37 @@ public class StorageEngine extends FrameworkServlet {
 		OutputStream out = null;
 
 		try {
-			S3ObjectRequest or = S3ObjectRequest.create(req, configuration
-					.getString(CONFIG_HOST));
+			S3ObjectRequest or;
+
+			try {
+				or = S3ObjectRequest.create(req, configuration
+						.getString(CONFIG_HOST));
+			} catch (InvalidAccessKeyIdException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"InvalidAccessKeyId");
+				return;
+			} catch (InvalidSecurityException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"InvalidSecurity");
+				return;
+			} catch (RequestTimeTooSkewedException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"RequestTimeTooSkewed");
+				return;
+			} catch (SignatureDoesNotMatchException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"SignatureDoesNotMatch");
+				return;
+			} catch (AuthenticatorException e) {
+				e.printStackTrace();
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+						"InvalidSecurity");
+				return;
+			}
 			logger.debug("S3ObjectRequest: " + or);
 
 			CanonicalUser requestor = or.getRequestor();
@@ -807,8 +873,9 @@ public class StorageEngine extends FrameworkServlet {
 					// write access control policy
 					Acp acp;
 					CanonicalUser owner;
-					
-					System.out.println("User is providing new ACP for bucket " + or.getBucket());
+
+					System.out.println("User is providing new ACP for bucket "
+							+ or.getBucket());
 
 					try {
 						bucket = storageService.loadBucket(or.getBucket());
@@ -843,7 +910,7 @@ public class StorageEngine extends FrameworkServlet {
 					acp.setOwner(owner);
 
 					bucket.setAcp(acp);
-					
+
 					System.out.println("Saving bucket ACP");
 					System.out.println("ACP: " + Acp.encode(bucket.getAcp()));
 
@@ -905,9 +972,35 @@ public class StorageEngine extends FrameworkServlet {
 	 */
 	public void methodDelete(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		S3ObjectRequest or = S3ObjectRequest.create(req, configuration
-				.getString(CONFIG_HOST));
+		S3ObjectRequest or;
 
+		try {
+			or = S3ObjectRequest.create(req, configuration
+					.getString(CONFIG_HOST));
+		} catch (InvalidAccessKeyIdException e) {
+			e.printStackTrace();
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+					"InvalidAccessKeyId");
+			return;
+		} catch (InvalidSecurityException e) {
+			e.printStackTrace();
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN, "InvalidSecurity");
+			return;
+		} catch (RequestTimeTooSkewedException e) {
+			e.printStackTrace();
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+					"RequestTimeTooSkewed");
+			return;
+		} catch (SignatureDoesNotMatchException e) {
+			e.printStackTrace();
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN,
+					"SignatureDoesNotMatch");
+			return;
+		} catch (AuthenticatorException e) {
+			e.printStackTrace();
+			resp.sendError(HttpServletResponse.SC_FORBIDDEN, "InvalidSecurity");
+			return;
+		}
 		logger.debug("S3ObjectRequest: " + or);
 
 		CanonicalUser requestor = or.getRequestor();
