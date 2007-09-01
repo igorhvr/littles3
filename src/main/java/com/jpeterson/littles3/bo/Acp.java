@@ -81,6 +81,9 @@ public class Acp {
 	private static final Namespace NAMESPACE_XSI = Namespace.getNamespace(
 			"xsi", "http://www.w3.org/2001/XMLSchema-instance");
 
+	// private static final Namespace NAMESPACE_S3 =
+	// Namespace.getNamespace("s3", "http://s3.amazonaws.com/doc/2006-03-01/");
+
 	/**
 	 * Basic constructor.
 	 */
@@ -351,6 +354,7 @@ public class Acp {
 		Element uriElement;
 		Attribute typeAttribute;
 		CanonicalUser user;
+		Namespace defaultNamespace;
 
 		acp = new Acp();
 
@@ -374,42 +378,47 @@ public class Acp {
 						+ accessControlPolicyElement);
 			}
 
-			if ((ownerElement = accessControlPolicyElement
-					.getChild(ELEMENT_OWNER)) == null) {
+			defaultNamespace = accessControlPolicyElement.getNamespace();
+
+			if ((ownerElement = accessControlPolicyElement.getChild(
+					ELEMENT_OWNER, defaultNamespace)) == null) {
 				throw new IOException(
 						"Invalid XML. Should have 'Owner' element");
 			}
 
-			if ((idElement = ownerElement.getChild(ELEMENT_ID)) == null) {
+			if ((idElement = ownerElement
+					.getChild(ELEMENT_ID, defaultNamespace)) == null) {
 				throw new IOException("Invalid XML. Should have 'ID' element");
 			}
 
 			user = new CanonicalUser(idElement.getText());
 
-			if ((displayNameElement = ownerElement
-					.getChild(ELEMENT_DISPLAY_NAME)) != null) {
+			if ((displayNameElement = ownerElement.getChild(
+					ELEMENT_DISPLAY_NAME, defaultNamespace)) != null) {
 				user.setDisplayName(displayNameElement.getText());
 			}
 
 			acp.setOwner(user);
 
 			if ((accessControlListElement = accessControlPolicyElement
-					.getChild(ELEMENT_ACCESS_CONTROL_LIST)) == null) {
+					.getChild(ELEMENT_ACCESS_CONTROL_LIST, defaultNamespace)) == null) {
 				throw new IOException(
 						"Invalid XML. Should have 'AccessControlList' element");
 			}
 
 			for (Iterator grants = accessControlListElement.getChildren(
-					ELEMENT_GRANT).iterator(); grants.hasNext();) {
+					ELEMENT_GRANT, defaultNamespace).iterator(); grants
+					.hasNext();) {
 				Grantee grantee;
 
 				grantElement = (Element) grants.next();
-				if ((granteeElement = grantElement.getChild(ELEMENT_GRANTEE)) == null) {
+				if ((granteeElement = grantElement.getChild(ELEMENT_GRANTEE,
+						defaultNamespace)) == null) {
 					throw new IOException(
 							"Invalid XML. Should have 'Grantee' element");
 				}
-				if ((permissionElement = grantElement
-						.getChild(ELEMENT_PERMISSION)) == null) {
+				if ((permissionElement = grantElement.getChild(
+						ELEMENT_PERMISSION, defaultNamespace)) == null) {
 					throw new IOException(
 							"Invalid XML. Should have 'Permission' element");
 				}
@@ -421,21 +430,23 @@ public class Acp {
 				}
 				String typeValue = typeAttribute.getValue();
 				if (ATTRIBUTE_TYPE_VALUE_CANONICAL_USER.equals(typeValue)) {
-					if ((idElement = granteeElement.getChild(ELEMENT_ID)) == null) {
+					if ((idElement = granteeElement.getChild(ELEMENT_ID,
+							defaultNamespace)) == null) {
 						throw new IOException(
 								"Invalid XML. Should have 'ID' element");
 					}
 
 					user = new CanonicalUser(idElement.getText());
 
-					if ((displayNameElement = granteeElement
-							.getChild(ELEMENT_DISPLAY_NAME)) != null) {
+					if ((displayNameElement = granteeElement.getChild(
+							ELEMENT_DISPLAY_NAME, defaultNamespace)) != null) {
 						user.setDisplayName(displayNameElement.getText());
 					}
 
 					grantee = user;
 				} else if (ATTRIBUTE_TYPE_VALUE_GROUP.equals(typeValue)) {
-					if ((uriElement = granteeElement.getChild(ELEMENT_URI)) == null) {
+					if ((uriElement = granteeElement.getChild(ELEMENT_URI,
+							defaultNamespace)) == null) {
 						throw new IOException(
 								"Invalid XML. Should have 'URI' element");
 					}

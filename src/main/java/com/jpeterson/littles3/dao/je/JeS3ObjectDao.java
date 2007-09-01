@@ -28,6 +28,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataRetrievalFailureException;
 
+import com.jpeterson.littles3.bo.Acp;
+import com.jpeterson.littles3.bo.CanonicalUser;
 import com.jpeterson.littles3.bo.S3Object;
 import com.jpeterson.littles3.dao.S3ObjectDao;
 import com.sleepycat.bind.tuple.TupleBinding;
@@ -316,6 +318,10 @@ public class JeS3ObjectDao implements S3ObjectDao {
 						// restrict to results that begin with the prefix
 						while ((operationStatus == OperationStatus.SUCCESS)
 								&& key.startsWith(prefix)) {
+							if (!bucket.equals(s3ObjectBucketKey.getBucket())) {
+								break;
+							}
+
 							if (results >= maxKeys) {
 								truncated = true;
 								break;
@@ -425,9 +431,11 @@ public class JeS3ObjectDao implements S3ObjectDao {
 			buffer.append("<Size>").append(o.getContentLength()).append(
 					"</Size>");
 			buffer.append("<Owner>");
-			// TODO: implement
-			buffer.append("<ID/>");
-			buffer.append("<DisplayName/>");
+			Acp acp = o.getAcp();
+			CanonicalUser owner = acp.getOwner();
+			buffer.append("<ID>").append(owner.getId()).append("</ID>");
+			buffer.append("<DisplayName>").append(owner.getDisplayName())
+					.append("</DisplayName>");
 			buffer.append("</Owner>");
 			buffer.append("<StorageClass>STANDARD</StorageClass>");
 			buffer.append("</Contents>");
