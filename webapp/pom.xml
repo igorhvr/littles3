@@ -5,10 +5,16 @@
 
   <!-- The Basics -->
   <groupId>com.jpeterson</groupId>
-  <artifactId>littleS3-api</artifactId>
+  <artifactId>littleS3</artifactId>
   <version>2.0.0</version>
-  <packaging>jar</packaging>
+  <packaging>war</packaging>
   <dependencies>
+    <dependency>
+      <groupId>com.jpeterson</groupId>
+      <artifactId>littles3-api</artifactId>
+      <version>2.0.0</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
@@ -38,6 +44,12 @@
       <artifactId>jdom</artifactId>
       <version>1.0</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.3</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>jmock</groupId>

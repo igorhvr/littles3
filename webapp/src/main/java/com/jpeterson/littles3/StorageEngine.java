@@ -57,7 +57,6 @@ import com.jpeterson.littles3.bo.RequestTimeTooSkewedException;
 import com.jpeterson.littles3.bo.ResourcePermission;
 import com.jpeterson.littles3.bo.S3Object;
 import com.jpeterson.littles3.bo.SignatureDoesNotMatchException;
-import com.jpeterson.littles3.dao.je.JeCentral;
 import com.jpeterson.littles3.service.BucketAlreadyExistsException;
 import com.jpeterson.littles3.service.BucketNotEmptyException;
 import com.jpeterson.littles3.service.StorageService;
@@ -140,20 +139,6 @@ public class StorageEngine extends FrameworkServlet {
 		eTag.setFlags(FileETag.FLAG_CONTENT);
 		setETag(eTag);
 
-		if (false) {
-			JeCentral jeCentral = (JeCentral) getWebApplicationContext()
-					.getBean("jeCentral");
-			if (jeCentral != null) {
-				try {
-					jeCentral.init();
-				} catch (Exception e) {
-					e.printStackTrace();
-					throw new ServletException("Unable to open JE environment",
-							e);
-				}
-			}
-		}
-
 		try {
 			configuration = new PropertiesConfiguration(DEFAULT_CONFIGURATION);
 		} catch (ConfigurationException e) {
@@ -165,17 +150,6 @@ public class StorageEngine extends FrameworkServlet {
 	}
 
 	public void destroy() {
-		JeCentral jeCentral = (JeCentral) getWebApplicationContext().getBean(
-				"jeCentral");
-
-		if (jeCentral != null) {
-			try {
-				jeCentral.destroy();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-
 		super.destroy();
 	}
 
@@ -1100,8 +1074,8 @@ public class StorageEngine extends FrameworkServlet {
 	 * 
 	 * @param name
 	 *            The name of the bucket.
-	 * @return <code>True</code> if the bucket name is valid,
-	 *         <code>false</code> otherwise.
+	 * @return <code>True</code> if the bucket name is valid, <code>false</code>
+	 *         otherwise.
 	 */
 	public static boolean isValidBucketName(String name) {
 		// alphanumeric, underscore, period, dash. between 3-255 characters
