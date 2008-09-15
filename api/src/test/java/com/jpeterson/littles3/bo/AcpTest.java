@@ -17,7 +17,10 @@
 package com.jpeterson.littles3.bo;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.security.AccessControlException;
 import java.util.Enumeration;
 
@@ -670,6 +673,52 @@ public class AcpTest extends TestCase {
 			} else {
 				fail("Unexpected grantee id: " + user.getId());
 			}
+		}
+	}
+
+	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization() {
+		Acp acp, reconstitutedAcp;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+		CanonicalUser id;
+
+		acp = new Acp();
+
+		id = new CanonicalUser("id");
+
+		acp.setOwner(id);
+
+		acp.grant(id, ResourcePermission.ACTION_FULL_CONTROL);
+
+		assertEquals("Unexpected value", id, acp.getOwner());
+		acp.checkPermission(new ResourcePermission(id,
+				ResourcePermission.ACTION_READ));
+
+		try {
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(acp);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedAcp = (Acp) ois.readObject();
+
+			assertEquals("Unexpected value", id, reconstitutedAcp.getOwner());
+			reconstitutedAcp.checkPermission(new ResourcePermission(id,
+					ResourcePermission.ACTION_READ));
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
 		}
 	}
 }

@@ -16,6 +16,11 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Date;
 
 import junit.framework.Test;
@@ -69,5 +74,45 @@ public class BucketTest extends TestCase {
 		assertNull("Unexpected value", bucket.getCreated());
 		bucket.setCreated(now);
 		assertEquals("Unexpected value", now, bucket.getCreated());
+	}
+
+	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization() {
+		Bucket bucket, reconstitutedBucket;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+		Date now = new Date();
+
+		bucket = new Bucket();
+
+		bucket.setName("test");
+		bucket.setCreated(now);
+
+		try {
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(bucket);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedBucket = (Bucket) ois.readObject();
+
+			assertEquals("Unexpected value", "test", reconstitutedBucket
+					.getName());
+			assertEquals("Unexpected value", now, reconstitutedBucket
+					.getCreated());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		}
 	}
 }

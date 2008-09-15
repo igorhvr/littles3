@@ -16,12 +16,20 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.Serializable;
+
 /**
  * Represents an S3 canonical user used in S3 access control.
  * 
  * @author Jesse Peterson
  */
-public class CanonicalUser implements Grantee {
+public class CanonicalUser implements Grantee, Serializable {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private String id;
 
 	private String displayName;
@@ -64,8 +72,8 @@ public class CanonicalUser implements Grantee {
 	 * Get the string that identifies the user to a human.
 	 * 
 	 * @return The string that identifies the user to a human. If
-	 *         <code>displayName</code> is <code>null</code>, return the
-	 *         value from <code>getId()</code>.
+	 *         <code>displayName</code> is <code>null</code>, return the value
+	 *         from <code>getId()</code>.
 	 */
 	public String getDisplayName() {
 		if (displayName == null) {
@@ -98,9 +106,8 @@ public class CanonicalUser implements Grantee {
 	 * Used to determine if the user is "anonymous". This means that the request
 	 * was not authenticated.
 	 * 
-	 * @return <code>true</code> if this represents an authenticated
-	 *         principal, <code>false</code> if this represents an anonymous
-	 *         principal.
+	 * @return <code>true</code> if this represents an authenticated principal,
+	 *         <code>false</code> if this represents an anonymous principal.
 	 */
 	public boolean isAnonymous() {
 		return id.equals(ID_ANONYMOUS);
@@ -113,10 +120,9 @@ public class CanonicalUser implements Grantee {
 	 * 
 	 * @param another
 	 *            principal to compare with.
-	 * @return <code>true</code> if the principal passed in is the same as
-	 *         that encapsulated by this principal, and <code>false</code>
-	 *         otherwise. This only depends on the value of id, not the display
-	 *         name.
+	 * @return <code>true</code> if the principal passed in is the same as that
+	 *         encapsulated by this principal, and <code>false</code> otherwise.
+	 *         This only depends on the value of id, not the display name.
 	 */
 	public boolean equals(Object another) {
 		if ((another != null) && (another instanceof CanonicalUser)) {

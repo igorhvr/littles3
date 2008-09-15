@@ -16,6 +16,12 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -70,7 +76,8 @@ public class AuthenticatedUsersGroupTest extends TestCase {
 		group = AuthenticatedUsersGroup.getInstance();
 
 		assertTrue("Should be member", group.isMember(new CanonicalUser("id")));
-		assertFalse("Should not be member", group.isMember(new CanonicalUser(CanonicalUser.ID_ANONYMOUS)));
+		assertFalse("Should not be member", group.isMember(new CanonicalUser(
+				CanonicalUser.ID_ANONYMOUS)));
 	}
 
 	/**
@@ -83,5 +90,38 @@ public class AuthenticatedUsersGroupTest extends TestCase {
 
 		assertEquals("Unexpected value", "uri "
 				+ AuthenticatedUsersGroup.URI_STRING, group.toString());
+	}
+
+	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization() {
+		AuthenticatedUsersGroup group, reconstitutedGroup;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+
+		group = AuthenticatedUsersGroup.getInstance();
+
+		try {
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(group);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedGroup = (AuthenticatedUsersGroup) ois.readObject();
+
+			assertEquals("Unexpected value", group, reconstitutedGroup);
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		}
 	}
 }

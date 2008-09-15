@@ -66,7 +66,7 @@ public interface S3ObjectDao {
 	 * @param bucket
 	 *            The bucket containing the keys to list.
 	 * @param prefix
-	 *            Restring the list to only contain results that begin with the
+	 *            Restrict the list to only contain results that begin with the
 	 *            specified prefix.
 	 * @param marker
 	 *            Enable pagination of large result sets.

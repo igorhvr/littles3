@@ -30,6 +30,12 @@ import org.apache.commons.logging.LogFactory;
  */
 public abstract class S3Object extends Resource {
 	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
 	 * Default content type per the Amazon S3 Developer Guide (API Version
 	 * 2006-03-01).
 	 */
@@ -252,8 +258,7 @@ public abstract class S3Object extends Resource {
 	/**
 	 * Delete the Object data.
 	 * 
-	 * @return <code>True</code> if data deleted, <code>false</code>
-	 *         otherwise.
+	 * @return <code>True</code> if data deleted, <code>false</code> otherwise.
 	 */
 	public abstract boolean deleteData();
 }

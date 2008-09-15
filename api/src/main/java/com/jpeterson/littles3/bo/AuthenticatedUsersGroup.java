@@ -27,6 +27,12 @@ import java.util.Enumeration;
  * @author Jesse Peterson
  */
 public class AuthenticatedUsersGroup extends GroupBase {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public static final String URI_STRING = "http://acs.amazonaws.com/groups/global/AuthenticatedUsers";
 
 	private static AuthenticatedUsersGroup instance;
@@ -60,8 +66,7 @@ public class AuthenticatedUsersGroup extends GroupBase {
 	 * 
 	 * @param user
 	 *            the principal to add to this group.
-	 * @return <code>false</code>, because membership is implied, not
-	 *         assigned.
+	 * @return <code>false</code>, because membership is implied, not assigned.
 	 */
 	public boolean addMember(Principal user) {
 		return false;
@@ -72,8 +77,7 @@ public class AuthenticatedUsersGroup extends GroupBase {
 	 * 
 	 * @param user
 	 *            the principal to remove from this group.
-	 * @return <code>false</code>, as you can not remove members from the
-	 *         group.
+	 * @return <code>false</code>, as you can not remove members from the group.
 	 */
 	public boolean removeMember(Principal user) {
 		return false;
@@ -107,8 +111,8 @@ public class AuthenticatedUsersGroup extends GroupBase {
 	}
 
 	/**
-	 * Compares this group to the specified object. Returns <code>true</code>
-	 * if the object passed in matches the principal represented by the
+	 * Compares this group to the specified object. Returns <code>true</code> if
+	 * the object passed in matches the principal represented by the
 	 * implementation of this interface.
 	 */
 	public boolean equals(Object another) {

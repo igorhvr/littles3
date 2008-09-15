@@ -53,7 +53,7 @@ public interface BucketDao {
 	 * @param bucket
 	 *            The S3 bucket to remove.
 	 * @throws DataAccessException
-	 *             Unabel to remove the S3 bucket.
+	 *             Unable to remove the S3 bucket.
 	 */
 	public void removeBucket(Bucket bucket) throws DataAccessException;
 }

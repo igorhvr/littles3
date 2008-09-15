@@ -28,6 +28,12 @@ import java.net.URL;
 
 public class FileS3Object extends S3Object {
 	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
 	 * Create a new <code>S3Object</code> that uses a local file to store the
 	 * object data.
 	 * 

@@ -16,6 +16,7 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.security.acl.Group;
 
@@ -24,7 +25,13 @@ import java.security.acl.Group;
  * 
  * @author Jesse Peterson
  */
-public abstract class GroupBase implements Grantee, Group {
+public abstract class GroupBase implements Grantee, Group, Serializable {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private URI uri;
 
 	/**

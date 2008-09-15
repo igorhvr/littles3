@@ -18,6 +18,7 @@ package com.jpeterson.littles3.bo;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.security.AccessControlException;
 import java.security.Permission;
 import java.security.Permissions;
@@ -40,7 +41,13 @@ import org.jdom.output.XMLOutputter;
  * 
  * @author Jesse Peterson
  */
-public class Acp {
+public class Acp implements Serializable {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	protected Log logger;
 
 	private CanonicalUser owner;

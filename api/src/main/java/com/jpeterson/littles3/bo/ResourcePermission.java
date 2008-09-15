@@ -209,9 +209,9 @@ public class ResourcePermission extends Permission {
 	 * 
 	 * @param that
 	 *            the ResourcePermission to check against.
-	 * @return <code>true</code> if this grantee equals that grantee of if
-	 *         this grantee is a <code>Group</code> and that grantee is a
-	 *         member of this group; <code>false</code> otherwise.
+	 * @return <code>true</code> if this grantee equals that grantee of if this
+	 *         grantee is a <code>Group</code> and that grantee is a member of
+	 *         this group; <code>false</code> otherwise.
 	 */
 	boolean impliesIgnoreMask(ResourcePermission that) {
 		if (this.grantee.equals(that.grantee)) {
@@ -375,11 +375,11 @@ public class ResourcePermission extends Permission {
 	 * @throws IOException
 	 *             Unable to read the object.
 	 * @throws ClassNotFoundException
-	 *             Unalbe to read the object.
+	 *             Unable to read the object.
 	 */
 	private void readObject(ObjectInputStream s) throws IOException,
 			ClassNotFoundException {
-		// Read in the actions, then restore everything els by calling init.
+		// Read in the actions, then restore everything else by calling init.
 		s.defaultReadObject();
 		init(getMask(actions));
 	}

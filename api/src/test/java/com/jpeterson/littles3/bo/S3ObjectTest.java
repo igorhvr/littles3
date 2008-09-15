@@ -1,18 +1,30 @@
 package com.jpeterson.littles3.bo;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-public class S3ObjectTest extends TestCase {
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+public class S3ObjectTest extends TestCase implements Serializable {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private Log logger;
 
 	/**
@@ -165,11 +177,53 @@ public class S3ObjectTest extends TestCase {
 	}
 
 	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization() {
+		S3Object s3Object, reconstitutedS3Object;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+
+		s3Object = new MyS3Object();
+
+		s3Object.setBucket("bucket");
+
+		try {
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(s3Object);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedS3Object = (S3Object) ois.readObject();
+
+			assertEquals("Unexpected value", "bucket", reconstitutedS3Object
+					.getBucket());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		}
+	}
+
+	/**
 	 * Test implementation of the abstract S3Object.
 	 * 
 	 * @author Jesse Peterson
 	 */
 	private class MyS3Object extends S3Object {
+		/**
+		 * If incompatible serialization changes are made, mostly deleting
+		 * methods, this must be changed.
+		 */
+		private static final long serialVersionUID = 1L;
+
 		public MyS3Object() {
 			super();
 		}

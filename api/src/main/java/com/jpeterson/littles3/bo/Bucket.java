@@ -24,6 +24,12 @@ import java.util.Date;
  * @author Jesse Peterson
  */
 public class Bucket extends Resource {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private String name;
 
 	private Date created;

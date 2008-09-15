@@ -16,6 +16,12 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -111,5 +117,73 @@ public class CanonicalUserTest extends TestCase {
 		user = new CanonicalUser(id);
 
 		assertEquals("Unexpected value", "id " + id, user.toString());
+	}
+
+	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization1() {
+		CanonicalUser user, reconstitutedUser;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+
+		user = new CanonicalUser("test");
+
+		try {
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(user);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedUser = (CanonicalUser) ois.readObject();
+
+			assertEquals("Unexpected user", user, reconstitutedUser);
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		}
+	}
+
+	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization2() {
+		CanonicalUser user, reconstitutedUser;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+
+		user = new CanonicalUser("test");
+
+		try {
+			user.setDisplayName("Unit Test");
+			
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(user);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedUser = (CanonicalUser) ois.readObject();
+
+			assertEquals("Unexpected user", user, reconstitutedUser);
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		}
 	}
 }

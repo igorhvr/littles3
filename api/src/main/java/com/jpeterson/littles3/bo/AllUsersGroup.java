@@ -28,6 +28,12 @@ import java.util.Enumeration;
  * @author Jesse Peterson
  */
 public class AllUsersGroup extends GroupBase {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	public static final String URI_STRING = "http://acs.amazonaws.com/groups/global/AllUsers";
 
 	private static AllUsersGroup instance;
@@ -61,8 +67,8 @@ public class AllUsersGroup extends GroupBase {
 	 * 
 	 * @param user
 	 *            the principal to add to this group.
-	 * @return <code>false</code>, because all principals are already
-	 *         members, by definition, of this group.
+	 * @return <code>false</code>, because all principals are already members,
+	 *         by definition, of this group.
 	 */
 	public boolean addMember(Principal user) {
 		return false;
@@ -73,8 +79,7 @@ public class AllUsersGroup extends GroupBase {
 	 * 
 	 * @param user
 	 *            the principal to remove from this group.
-	 * @return <code>false</code>, as you can not remove members from the
-	 *         group.
+	 * @return <code>false</code>, as you can not remove members from the group.
 	 */
 	public boolean removeMember(Principal user) {
 		return false;
@@ -86,8 +91,7 @@ public class AllUsersGroup extends GroupBase {
 	 * 
 	 * @param member
 	 *            the principal whose membership is to be checked.
-	 * @return <code>true</code>, as all principals are members, by
-	 *         definition.
+	 * @return <code>true</code>, as all principals are members, by definition.
 	 */
 	public boolean isMember(Principal member) {
 		return true;
@@ -104,8 +108,8 @@ public class AllUsersGroup extends GroupBase {
 	}
 
 	/**
-	 * Compares this group to the specified object. Returns <code>true</code>
-	 * if the object passed in matches the principal represented by the
+	 * Compares this group to the specified object. Returns <code>true</code> if
+	 * the object passed in matches the principal represented by the
 	 * implementation of this interface.
 	 */
 	public boolean equals(Object another) {

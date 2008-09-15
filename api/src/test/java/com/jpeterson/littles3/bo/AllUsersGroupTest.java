@@ -16,12 +16,18 @@
 
 package com.jpeterson.littles3.bo;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class AllUsersGroupTest extends TestCase {
 	private Log logger;
@@ -68,5 +74,38 @@ public class AllUsersGroupTest extends TestCase {
 		group = AllUsersGroup.getInstance();
 
 		assertTrue("Should be member", group.isMember(new CanonicalUser("id")));
+	}
+
+	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization() {
+		AllUsersGroup group, reconstitutedGroup;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+
+		group = AllUsersGroup.getInstance();
+
+		try {
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(group);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedGroup = (AllUsersGroup) ois.readObject();
+
+			assertEquals("Unexpected value", group, reconstitutedGroup);
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		}
 	}
 }

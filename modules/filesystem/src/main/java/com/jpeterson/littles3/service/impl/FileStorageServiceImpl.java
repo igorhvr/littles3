@@ -36,23 +36,13 @@ import com.jpeterson.littles3.bo.ResourcePermission;
 import com.jpeterson.littles3.bo.S3Object;
 import com.jpeterson.littles3.dao.BucketDao;
 import com.jpeterson.littles3.dao.S3ObjectDao;
+import com.jpeterson.littles3.dao.filesystem.FileBase;
 import com.jpeterson.littles3.service.BucketAlreadyExistsException;
 import com.jpeterson.littles3.service.BucketNotEmptyException;
 import com.jpeterson.littles3.service.StorageService;
 
-public class FileStorageServiceImpl implements StorageService {
-	public static final String CONFIG_STORAGE_LOCATION = "storageLocation";
-
-	public static final String CONFIG_DIRECTORY_BUCKETS = "dir.buckets";
-
-	private static final String DIRECTORY_BUCKETS = "buckets";
-
-	private Configuration configuration;
-
+public class FileStorageServiceImpl extends FileBase implements StorageService {
 	private Log logger;
-
-	private static final String fileSeparator = System
-			.getProperty("file.separator");
 
 	private BucketDao bucketDao;
 
@@ -72,7 +62,8 @@ public class FileStorageServiceImpl implements StorageService {
 		logger.debug("Creating S3Object for bucket[" + bucket.getName()
 				+ "] + key[" + key + "]");
 
-		String bucketPath = generateBucketPath(bucket.getName()).toString();
+		String bucketPath = generateBucketStoragePath()
+				.append(bucket.getName()).append(fileSeparator).toString();
 		File bucketDirectory = new File(bucketPath);
 		if (!bucketDirectory.exists()) {
 			throw new IOException("Bucket doesn't exist");
@@ -123,13 +114,14 @@ public class FileStorageServiceImpl implements StorageService {
 		Acp acp;
 		Bucket bucket;
 
-		bucketDirectory = new File(generateBucketPath(name).toString());
+		bucketDirectory = new File(generateBucketStoragePath().append(name)
+				.append(fileSeparator).toString());
 
 		if (bucketDirectory.exists()) {
 			throw new BucketAlreadyExistsException("Bucket exists");
 		}
 
-		if (!bucketDirectory.mkdir()) {
+		if (!bucketDirectory.mkdirs()) {
 			throw new IOException("Could not create bucket");
 		}
 
@@ -165,8 +157,8 @@ public class FileStorageServiceImpl implements StorageService {
 
 		logger.debug("Request to delete bucket: " + bucket.getName());
 
-		bucketDirectory = new File(generateBucketPath(bucket.getName())
-				.toString());
+		bucketDirectory = new File(generateBucketStoragePath().append(
+				bucket.getName()).append(fileSeparator).toString());
 
 		if (bucketDirectory.exists()) {
 			String[] files = bucketDirectory.list();
@@ -249,60 +241,5 @@ public class FileStorageServiceImpl implements StorageService {
 
 	public void setS3ObjectDao(S3ObjectDao s3ObjectDao) {
 		this.s3ObjectDao = s3ObjectDao;
-	}
-
-	/**
-	 * Get the configuration for the object.
-	 * 
-	 * @return The configuration for the object.
-	 */
-	public Configuration getConfiguration() {
-		return configuration;
-	}
-
-	/**
-	 * Set the configuration for the object.
-	 * 
-	 * @param configuration
-	 *            The configuration for the object.
-	 */
-	public void setConfiguration(Configuration configuration) {
-		this.configuration = configuration;
-	}
-
-	/**
-	 * Generates a local path for the bucket. The path is a directory.
-	 * 
-	 * @param bucket
-	 *            The bucket name.
-	 * @return A <code>StringBuffer</code> containing the local path to a
-	 *         directory for the bucket.
-	 */
-	public StringBuffer generateBucketPath(String bucket) {
-		StringBuffer buffer = new StringBuffer();
-		Configuration configuration = getConfiguration();
-		String storageLocation = configuration
-				.getString(CONFIG_STORAGE_LOCATION);
-		String bucketDirectory = configuration.getString(
-				CONFIG_DIRECTORY_BUCKETS, DIRECTORY_BUCKETS);
-
-		logger.debug("Generating bucket path for bucket[" + bucket + "]");
-
-		buffer.append(storageLocation);
-
-		if (!storageLocation.endsWith(fileSeparator)) {
-			buffer.append(fileSeparator);
-		}
-
-		buffer.append(bucketDirectory);
-
-		if (!bucketDirectory.endsWith(fileSeparator)) {
-			buffer.append(fileSeparator);
-		}
-
-		buffer.append(bucket);
-		buffer.append(fileSeparator);
-
-		return buffer;
 	}
 }

@@ -16,6 +16,7 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.Serializable;
 import java.security.AccessControlException;
 import java.security.Permission;
 
@@ -27,7 +28,13 @@ import org.apache.commons.logging.LogFactory;
  * 
  * @author Jesse Peterson
  */
-public abstract class Resource {
+public abstract class Resource implements Serializable {
+	/**
+	 * If incompatible serialization changes are made, mostly deleting methods,
+	 * this must be changed.
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private Acp acp;
 
 	protected Log logger;

@@ -16,11 +16,15 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -234,6 +238,52 @@ public class FileS3ObjectTest extends TestCase {
 			e.printStackTrace();
 			fail("Unexpected exception");
 			return;
+		}
+	}
+
+	/**
+	 * Test that an instance is serializable.
+	 */
+	public void test_serialization() {
+		FileS3Object s3Object, reconstitutedS3Object;
+		ByteArrayInputStream bais;
+		ByteArrayOutputStream baos;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+		URL storageUrl = null;
+
+		try {
+			storageUrl = new URL("file:///c:/");
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+			fail("Unexpected exception");
+		}
+
+		s3Object = new FileS3Object("bucket", "key", storageUrl);
+
+		try {
+			baos = new ByteArrayOutputStream();
+			oos = new ObjectOutputStream(baos);
+
+			oos.writeObject(s3Object);
+
+			bais = new ByteArrayInputStream(baos.toByteArray());
+			ois = new ObjectInputStream(bais);
+
+			reconstitutedS3Object = (FileS3Object) ois.readObject();
+
+			assertEquals("Unexpected value", "bucket", reconstitutedS3Object
+					.getBucket());
+			assertEquals("Unexpected value", "key", reconstitutedS3Object
+					.getKey());
+			assertEquals("Unexpected value", storageUrl, reconstitutedS3Object
+					.getStorageUrl());
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			fail("Unexpected exception");
 		}
 	}
 }
