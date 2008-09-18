@@ -55,6 +55,8 @@ public class S3ObjectRequest {
 
 	private static final String PARAMETER_ACL = "acl";
 
+	private static boolean debug = false;
+
 	/**
 	 * Empty constructor.
 	 */
@@ -122,10 +124,12 @@ public class S3ObjectRequest {
 		serviceEndpoint = requestURL.substring(0, requestURL.length()
 				- pathInfoLength);
 
-		System.out.println("---------------");
-		System.out.println("requestURI: " + requestURI);
-		System.out.println("serviceEndpoint: " + serviceEndpoint);
-		System.out.println("---------------");
+		if (debug) {
+			System.out.println("---------------");
+			System.out.println("requestURI: " + requestURI);
+			System.out.println("serviceEndpoint: " + serviceEndpoint);
+			System.out.println("---------------");
+		}
 
 		if ((host == null) || // http 1.0 form
 				(host.equals(baseHost))) { // ordinary method
@@ -244,13 +248,16 @@ public class S3ObjectRequest {
 		stringToSign.append(canonicalizedAmzHeaders);
 		stringToSign.append(canonicalizedResource);
 
-		System.out.println(":v:v:v:v:");
-		System.out.println("undecodedPathPart: " + undecodedPathPart);
-		System.out.println("canonicalizedAmzHeaders: "
-				+ canonicalizedAmzHeaders);
-		System.out.println("canonicalizedResource: " + canonicalizedResource);
-		System.out.println("stringToSign: " + stringToSign);
-		System.out.println(":^:^:^:^:");
+		if (debug) {
+			System.out.println(":v:v:v:v:");
+			System.out.println("undecodedPathPart: " + undecodedPathPart);
+			System.out.println("canonicalizedAmzHeaders: "
+					+ canonicalizedAmzHeaders);
+			System.out.println("canonicalizedResource: "
+					+ canonicalizedResource);
+			System.out.println("stringToSign: " + stringToSign);
+			System.out.println(":^:^:^:^:");
+		}
 
 		o.setServiceEndpoint(serviceEndpoint);
 		o.setBucket(bucket);
@@ -404,8 +411,8 @@ public class S3ObjectRequest {
 	 *            an HttpServletRequest object that contains the request the
 	 *            client has made of the servlet
 	 * @return The principal making the request. Will be a
-	 *         <code>CanonicalUser</code> with an id of the user principal
-	 *         name if the request is authenticated or an "anonymous"
+	 *         <code>CanonicalUser</code> with an id of the user principal name
+	 *         if the request is authenticated or an "anonymous"
 	 *         <code>Canonicaluser</code> is the request is non authenticated.
 	 * @throws AuthenticatorException
 	 *             Unable to authenticate the request.

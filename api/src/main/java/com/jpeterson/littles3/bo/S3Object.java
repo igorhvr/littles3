@@ -19,6 +19,10 @@ package com.jpeterson.littles3.bo;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,6 +64,8 @@ public abstract class S3Object extends Resource {
 	protected long lastModified;
 
 	protected Log logger;
+
+	protected HashMap<String, List<String>> metadata = new HashMap<String, List<String>>();
 
 	/**
 	 * Basic constructor. Subclasses should be sure to call this parent
@@ -261,4 +267,66 @@ public abstract class S3Object extends Resource {
 	 * @return <code>True</code> if data deleted, <code>false</code> otherwise.
 	 */
 	public abstract boolean deleteData();
+
+	/**
+	 * Get the first metadata value for a particular <code>name</code>.
+	 * 
+	 * @param name
+	 *            Name of the metadata.
+	 * @return The metadata name's value. May be <code>null</code> if no
+	 *         metadata for the provided <code>name</code>.
+	 */
+	public String getMetadataValue(String name) {
+		List<String> values = metadata.get(name);
+
+		if ((values != null) && (values.size() > 0)) {
+			return values.get(0);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get the metadata values for a particular <code>name</code>.
+	 * 
+	 * @param name
+	 *            Name of the metadata.
+	 * @return An iterator or <code>String</code> values.
+	 */
+	public Iterator<String> getMetadataValues(String name) {
+		List<String> values = metadata.get(name);
+
+		if (values != null) {
+			return values.iterator();
+		}
+
+		return new ArrayList<String>().iterator();
+	}
+
+	/**
+	 * Get the metadata names.
+	 * 
+	 * @return The metadata names.
+	 */
+	public Iterator<String> getMetadataNames() {
+		return metadata.keySet().iterator();
+	}
+
+	/**
+	 * Add a value to the metadata.
+	 * 
+	 * @param name
+	 *            The metadata <code>name</code>.
+	 * @param value
+	 *            The metadata <code>value</code>.
+	 */
+	public void addMetadata(String name, String value) {
+		List<String> values = metadata.get(name);
+		if (values == null) {
+			values = new ArrayList<String>();
+			metadata.put(name, values);
+		}
+
+		values.add(value);
+	}
 }

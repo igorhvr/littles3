@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Iterator;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -174,6 +175,64 @@ public class S3ObjectTest extends TestCase implements Serializable {
 		assertEquals("Unexpected value", 0, s3Object.getLastModified());
 		s3Object.setLastModified(100);
 		assertEquals("Unexpected value", 100, s3Object.getLastModified());
+	}
+
+	/**
+	 * Test the metadata.
+	 */
+	public void test_metadata() {
+		S3Object s3Object;
+		Iterator<String> iter;
+
+		s3Object = new MyS3Object();
+
+		assertNull("Unexpected value", s3Object.getMetadataValue("foo"));
+
+		iter = s3Object.getMetadataValues("foo");
+		assertFalse("Unexpected value", iter.hasNext());
+
+		s3Object.addMetadata("foo", "value");
+
+		assertEquals("Unexpected value", "value", s3Object
+				.getMetadataValue("foo"));
+
+		iter = s3Object.getMetadataValues("foo");
+
+		assertTrue("Unexpected value", iter.hasNext());
+		assertEquals("Unexpected value", "value", iter.next());
+		assertFalse("Unexpected value", iter.hasNext());
+
+		s3Object.addMetadata("bar", "baz");
+
+		assertEquals("Unexpected value", "baz", s3Object
+				.getMetadataValue("bar"));
+
+		s3Object.addMetadata("foo", "value2");
+
+		assertEquals("Unexpected value", "value", s3Object
+				.getMetadataValue("foo"));
+
+		iter = s3Object.getMetadataValues("foo");
+
+		assertTrue("Unexpected value", iter.hasNext());
+		assertEquals("Unexpected value", "value", iter.next());
+		assertTrue("Unexpected value", iter.hasNext());
+		assertEquals("Unexpected value", "value2", iter.next());
+		assertFalse("Unexpected value", iter.hasNext());
+
+		iter = s3Object.getMetadataNames();
+
+		assertTrue("Unexpected value", iter.hasNext());
+		String name = iter.next();
+		if ("foo".equals(name)) {
+			assertTrue("Unexpected value", iter.hasNext());
+			assertEquals("Unexpected value", "bar", iter.next());
+		} else {
+			assertEquals("Unexpected value", "bar", name);
+			assertTrue("Unexpected value", iter.hasNext());
+			assertEquals("Unexpected value", "foo", iter.next());
+		}
+		assertFalse("Unexpected value", iter.hasNext());
 	}
 
 	/**

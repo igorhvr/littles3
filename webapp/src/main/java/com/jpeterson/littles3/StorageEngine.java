@@ -81,6 +81,8 @@ public class StorageEngine extends FrameworkServlet {
 	 */
 	public static final String HEADER_HTTP_METHOD_OVERRIDE = "X-HTTP-Method-Override";
 
+	public static final String HEADER_PREFIX_USER_META = "x-amz-meta-";
+
 	private Log logger;
 
 	/**
@@ -403,8 +405,22 @@ public class StorageEngine extends FrameworkServlet {
 						resp.setHeader("Content-Disposition", value);
 					}
 					// TODO: set the Content-Range, if request includes Range
-					// TODO: add "x-amz-meta-" metadata
 					// TODO: add "x-amz-missing-meta", if any
+
+					// add the "x-amz-meta-" headers
+					for (Iterator<String> names = s3Object.getMetadataNames(); names
+							.hasNext();) {
+						String name = names.next();
+						String headerName = HEADER_PREFIX_USER_META + name;
+						String prefix = "";
+						StringBuffer buf = new StringBuffer();
+						for (Iterator<String> values = s3Object
+								.getMetadataValues(name); values.hasNext();) {
+							buf.append(values.next()).append(prefix);
+							prefix = ",";
+						}
+						resp.setHeader(headerName, buf.toString());
+					}
 
 					resp.setDateHeader("Last-Modified", s3Object
 							.getLastModified());
@@ -821,6 +837,24 @@ public class StorageEngine extends FrameworkServlet {
 							+ s3Object.getContentType());
 					s3Object.setLastModified(System.currentTimeMillis());
 
+					// metadata
+					int prefixLength = HEADER_PREFIX_USER_META.length();
+					String name;
+					for (Enumeration headerNames = req.getHeaderNames(); headerNames
+							.hasMoreElements();) {
+						String headerName = (String) headerNames.nextElement();
+						if (headerName.startsWith(HEADER_PREFIX_USER_META)) {
+							name = headerName.substring(prefixLength)
+									.toLowerCase();
+							for (Enumeration headers = req
+									.getHeaders(headerName); headers
+									.hasMoreElements();) {
+								value = (String) headers.nextElement();
+								s3Object.addMetadata(name, value);
+							}
+						}
+					}
+
 					// calculate ETag, hex encoding of MD5
 					value = new String(Hex.encodeHex(digestOutputStream
 							.getMessageDigest().digest()));
@@ -848,7 +882,7 @@ public class StorageEngine extends FrameworkServlet {
 					Acp acp;
 					CanonicalUser owner;
 
-					System.out.println("User is providing new ACP for bucket "
+					logger.debug("User is providing new ACP for bucket "
 							+ or.getBucket());
 
 					try {
@@ -885,8 +919,8 @@ public class StorageEngine extends FrameworkServlet {
 
 					bucket.setAcp(acp);
 
-					System.out.println("Saving bucket ACP");
-					System.out.println("ACP: " + Acp.encode(bucket.getAcp()));
+					logger.debug("Saving bucket ACP");
+					logger.debug("ACP: " + Acp.encode(bucket.getAcp()));
 
 					storageService.storeBucket(bucket);
 				} else {
