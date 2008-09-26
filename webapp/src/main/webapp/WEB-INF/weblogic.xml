@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<weblogic-web-app xmlns="http://www.bea.com/ns/weblogic/90" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!-- Deployment information, encoded in source during development, for a proprietary system. Hmm. -->
+  <!-- Based on wlserver_10.0/samples/server/medrec/build/medrecEar/MedRecRMWebServices/WEB-INF/weblogic.xml -->
+  <context-root>littleS3</context-root>
+</weblogic-web-app>
