@@ -74,11 +74,15 @@ public class S3ObjectRequest {
 	 *            "expected". This is used to help determine how the bucket name
 	 *            will be interpreted. This is used to implement the "Virtual
 	 *            Hosting of Buckets".
+	 * @param authenticator
+	 *            The authenticator to use to authenticate this request.
 	 * @return An object initialized from the request.
 	 * @throws IllegalArgumentException
 	 *             Invalid request.
 	 */
-	public static S3ObjectRequest create(HttpServletRequest req, String baseHost)
+	@SuppressWarnings("unchecked")
+	public static S3ObjectRequest create(HttpServletRequest req,
+			String baseHost, Authenticator authenticator)
 			throws IllegalArgumentException, AuthenticatorException {
 		S3ObjectRequest o = new S3ObjectRequest();
 		String pathInfo = req.getPathInfo();

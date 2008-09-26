@@ -48,6 +48,7 @@ import org.springframework.web.servlet.FrameworkServlet;
 import com.jpeterson.littles3.bo.Acp;
 import com.jpeterson.littles3.bo.AllUsersGroup;
 import com.jpeterson.littles3.bo.AuthenticatedUsersGroup;
+import com.jpeterson.littles3.bo.Authenticator;
 import com.jpeterson.littles3.bo.AuthenticatorException;
 import com.jpeterson.littles3.bo.Bucket;
 import com.jpeterson.littles3.bo.CanonicalUser;
@@ -95,6 +96,9 @@ public class StorageEngine extends FrameworkServlet {
 	 * serving.
 	 */
 	public static final String CONFIG_HOST = "host";
+
+	public static final String BEAN_AUTHENTICATOR = "authenticator";
+	public static final String BEAN_STORAGE_SERVICE = "storageService";
 
 	private ETag eTag;
 
@@ -312,7 +316,9 @@ public class StorageEngine extends FrameworkServlet {
 
 			try {
 				or = S3ObjectRequest.create(req, configuration
-						.getString(CONFIG_HOST));
+						.getString(CONFIG_HOST),
+						(Authenticator) getWebApplicationContext().getBean(
+								BEAN_AUTHENTICATOR));
 			} catch (InvalidAccessKeyIdException e) {
 				e.printStackTrace();
 				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -346,7 +352,7 @@ public class StorageEngine extends FrameworkServlet {
 
 				try {
 					storageService = (StorageService) getWebApplicationContext()
-							.getBean("storageService");
+							.getBean(BEAN_STORAGE_SERVICE);
 					s3Object = storageService.load(or.getBucket(), or.getKey());
 
 					if (s3Object == null) {
@@ -498,7 +504,7 @@ public class StorageEngine extends FrameworkServlet {
 				String value;
 
 				storageService = (StorageService) getWebApplicationContext()
-						.getBean("storageService");
+						.getBean(BEAN_STORAGE_SERVICE);
 
 				if (req.getParameter(PARAMETER_ACL) != null) {
 					// retrieve access control policy
@@ -586,7 +592,7 @@ public class StorageEngine extends FrameworkServlet {
 				List buckets;
 
 				storageService = (StorageService) getWebApplicationContext()
-						.getBean("storageService");
+						.getBean(BEAN_STORAGE_SERVICE);
 
 				buckets = storageService.findBuckets("");
 
@@ -642,6 +648,7 @@ public class StorageEngine extends FrameworkServlet {
 	 * @throws ServletException
 	 *             if the request for the PUT cannot be handled
 	 */
+	@SuppressWarnings("unchecked")
 	public void methodPut(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		OutputStream out = null;
@@ -651,7 +658,9 @@ public class StorageEngine extends FrameworkServlet {
 
 			try {
 				or = S3ObjectRequest.create(req, configuration
-						.getString(CONFIG_HOST));
+						.getString(CONFIG_HOST),
+						(Authenticator) getWebApplicationContext().getBean(
+								BEAN_AUTHENTICATOR));
 			} catch (InvalidAccessKeyIdException e) {
 				e.printStackTrace();
 				resp.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -701,7 +710,7 @@ public class StorageEngine extends FrameworkServlet {
 				}
 
 				storageService = (StorageService) getWebApplicationContext()
-						.getBean("storageService");
+						.getBean(BEAN_STORAGE_SERVICE);
 
 				if (req.getParameter(PARAMETER_ACL) != null) {
 					// write access control policy
@@ -875,7 +884,7 @@ public class StorageEngine extends FrameworkServlet {
 				Bucket bucket;
 
 				storageService = (StorageService) getWebApplicationContext()
-						.getBean("storageService");
+						.getBean(BEAN_STORAGE_SERVICE);
 
 				if (req.getParameter(PARAMETER_ACL) != null) {
 					// write access control policy
@@ -984,7 +993,9 @@ public class StorageEngine extends FrameworkServlet {
 
 		try {
 			or = S3ObjectRequest.create(req, configuration
-					.getString(CONFIG_HOST));
+					.getString(CONFIG_HOST),
+					(Authenticator) getWebApplicationContext().getBean(
+							BEAN_AUTHENTICATOR));
 		} catch (InvalidAccessKeyIdException e) {
 			e.printStackTrace();
 			resp.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -1019,9 +1030,9 @@ public class StorageEngine extends FrameworkServlet {
 			StorageService storageService;
 
 			storageService = (StorageService) getWebApplicationContext()
-					.getBean("storageService");
+					.getBean(BEAN_STORAGE_SERVICE);
 
-			// make sure requestor can "WRITE" to the bucket
+			// make sure requester can "WRITE" to the bucket
 			try {
 				bucket = storageService.loadBucket(or.getBucket());
 				bucket.canWrite(requestor);
@@ -1055,7 +1066,7 @@ public class StorageEngine extends FrameworkServlet {
 			String bucketName = or.getBucket();
 
 			storageService = (StorageService) getWebApplicationContext()
-					.getBean("storageService");
+					.getBean(BEAN_STORAGE_SERVICE);
 
 			try {
 				bucket = storageService.loadBucket(bucketName);

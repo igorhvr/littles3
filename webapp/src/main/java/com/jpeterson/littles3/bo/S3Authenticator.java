@@ -41,9 +41,7 @@ public class S3Authenticator implements Authenticator {
 
 	private static final String AUTHORIZATION_TYPE = "AWS";
 
-	private static final String AWS_ACCESS_KEY_ID = "0PN5J17HBGZHT7JJ3X82";
-
-	private static final String AWS_SECRET_ACCESS_KEY = "uV3F3YluFJax1cknvbcGwgjvx4QpvB+leU8dUj2o";
+	private UserDirectory userDirectory;
 
 	/**
 	 * Empty constructor.
@@ -60,8 +58,7 @@ public class S3Authenticator implements Authenticator {
 	 *            The original HTTP request.
 	 * @param s3Request
 	 *            The S3 specific information for authenticating the request.
-	 * @return The authenticated <code>CanonicalUser</code> making the
-	 *         request.
+	 * @return The authenticated <code>CanonicalUser</code> making the request.
 	 * @throws RequestTimeTooSkewedException
 	 *             Thrown if the request timestamp is outside of the allotted
 	 *             timeframe.
@@ -124,7 +121,8 @@ public class S3Authenticator implements Authenticator {
 
 		String accessKeyId = keys[0];
 		String signature = keys[1];
-		String secretAccessKey = getSecretAccessKey(accessKeyId);
+		String secretAccessKey = userDirectory
+				.getAwsSecretAccessKey(accessKeyId);
 		String calculatedSignature;
 
 		try {
@@ -148,7 +146,7 @@ public class S3Authenticator implements Authenticator {
 
 		if (calculatedSignature.equals(signature)) {
 			// authenticated!
-			return new CanonicalUser(accessKeyId);
+			return userDirectory.getCanonicalUser(secretAccessKey);
 		} else {
 			throw new SignatureDoesNotMatchException(
 					"Provided signature doesn't match calculated value");
@@ -156,22 +154,25 @@ public class S3Authenticator implements Authenticator {
 	}
 
 	/**
-	 * Get the secret access key for the access key id.
+	 * Get the <code>UserDirectory</code> for accessing user information for
+	 * authentication.
 	 * 
-	 * @param accessKeyId
-	 *            The access key id of the secret access key to retrieve.
-	 * @return The secret access key for the access key id.
-	 * @throws InvalidAccessKeyIdException
-	 *             The provided access key id is not found.
+	 * @return The <code>UserDirectory</code> for accessing user information for
+	 *         authentication.
 	 */
-	private String getSecretAccessKey(String accessKeyId)
-			throws InvalidAccessKeyIdException {
-		// TODO: add a real implementation
-		if (AWS_ACCESS_KEY_ID.equals(accessKeyId)) {
-			return AWS_SECRET_ACCESS_KEY;
-		}
+	public UserDirectory getUserDirectory() {
+		return userDirectory;
+	}
 
-		throw new InvalidAccessKeyIdException("Invalid access key id: "
-				+ accessKeyId);
+	/**
+	 * Set the <code>UserDirectory</code> for accessing user information for
+	 * authentication.
+	 * 
+	 * @param userDirectory
+	 *            The <code>UserDirectory</code> for accessing user information
+	 *            for authentication.
+	 */
+	public void setUserDirectory(UserDirectory userDirectory) {
+		this.userDirectory = userDirectory;
 	}
 }

@@ -32,6 +32,8 @@ import org.jmock.MockObjectTestCase;
 
 import com.jpeterson.littles3.bo.AuthenticatorException;
 import com.jpeterson.littles3.bo.CanonicalUser;
+import com.jpeterson.littles3.bo.HackAuthenticator;
+import com.jpeterson.littles3.bo.S3Authenticator;
 
 public class S3ObjectRequestTest extends MockObjectTestCase {
 	private Log logger;
@@ -110,9 +112,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"localhost");
+					"localhost", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -151,9 +156,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"localhost");
+					"localhost", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -192,9 +200,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"localhost");
+					"localhost", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -232,9 +243,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"localhost");
+					"localhost", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -272,9 +286,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"s3.amazonaws.com");
+					"s3.amazonaws.com", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -312,9 +329,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"s3.amazonaws.com");
+					"s3.amazonaws.com", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -352,9 +372,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"s3.amazonaws.com");
+					"s3.amazonaws.com", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -392,9 +415,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"s3.amazonaws.com");
+					"s3.amazonaws.com", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -432,9 +458,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"s3.amazonaws.com");
+					"s3.amazonaws.com", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -472,9 +501,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"localhost");
+					"localhost", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -510,9 +542,12 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				eq("x-hack-user")).will(returnValue(null));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			o = S3ObjectRequest.create(
 					(HttpServletRequest) mockHttpServletRequest.proxy(),
-					"localhost");
+					"localhost", authenticator);
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			fail("Unexpected exception");
@@ -543,8 +578,11 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 				returnValue(new StringBuffer("http://localhost/context/bar")));
 
 		try {
+			HackAuthenticator authenticator = new HackAuthenticator();
+			authenticator.setAuthenticator(new S3Authenticator());
+
 			S3ObjectRequest.create((HttpServletRequest) mockHttpServletRequest
-					.proxy(), "localhost");
+					.proxy(), "localhost", authenticator);
 			fail("Expected exception");
 		} catch (IllegalArgumentException e) {
 			// expected
