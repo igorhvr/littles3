@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.AccessControlException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
@@ -96,6 +98,13 @@ public class StorageEngine extends FrameworkServlet {
 	 * serving.
 	 */
 	public static final String CONFIG_HOST = "host";
+
+	/**
+	 * This token can be used in a <code>CONFIG_HOST</code> for the local host.
+	 * It is resolved via
+	 * <code>InetAddress.getLocalHost().getCanonicalHostName()</code>.
+	 */
+	public static final String CONFIG_HOST_TOKEN_RESOLVED_LOCAL_HOST = "$resolvedLocalHost$";
 
 	public static final String BEAN_AUTHENTICATOR = "authenticator";
 	public static final String BEAN_STORAGE_SERVICE = "storageService";
@@ -315,8 +324,7 @@ public class StorageEngine extends FrameworkServlet {
 			S3ObjectRequest or;
 
 			try {
-				or = S3ObjectRequest.create(req, configuration
-						.getString(CONFIG_HOST),
+				or = S3ObjectRequest.create(req, resolvedHost(),
 						(Authenticator) getWebApplicationContext().getBean(
 								BEAN_AUTHENTICATOR));
 			} catch (InvalidAccessKeyIdException e) {
@@ -657,8 +665,7 @@ public class StorageEngine extends FrameworkServlet {
 			S3ObjectRequest or;
 
 			try {
-				or = S3ObjectRequest.create(req, configuration
-						.getString(CONFIG_HOST),
+				or = S3ObjectRequest.create(req, resolvedHost(),
 						(Authenticator) getWebApplicationContext().getBean(
 								BEAN_AUTHENTICATOR));
 			} catch (InvalidAccessKeyIdException e) {
@@ -992,8 +999,7 @@ public class StorageEngine extends FrameworkServlet {
 		S3ObjectRequest or;
 
 		try {
-			or = S3ObjectRequest.create(req, configuration
-					.getString(CONFIG_HOST),
+			or = S3ObjectRequest.create(req, resolvedHost(),
 					(Authenticator) getWebApplicationContext().getBean(
 							BEAN_AUTHENTICATOR));
 		} catch (InvalidAccessKeyIdException e) {
@@ -1214,5 +1220,37 @@ public class StorageEngine extends FrameworkServlet {
 			acp.grant(AuthenticatedUsersGroup.getInstance(),
 					ResourcePermission.ACTION_READ);
 		}
+	}
+
+	/**
+	 * Resolves the configured host name, replacing any tokens in the configured
+	 * host name value.
+	 * 
+	 * @return The configured host name after any tokens have been replaced.
+	 * @see #CONFIG_HOST
+	 * @see #CONFIG_HOST_TOKEN_RESOLVED_LOCAL_HOST
+	 */
+	public String resolvedHost() {
+		String configHost;
+
+		configHost = configuration.getString(CONFIG_HOST);
+		logger.debug("configHost: " + configHost);
+
+		if (configHost.indexOf(CONFIG_HOST_TOKEN_RESOLVED_LOCAL_HOST) >= 0) {
+			InetAddress localHost;
+			String resolvedLocalHost = "localhost";
+
+			try {
+				localHost = InetAddress.getLocalHost();
+				resolvedLocalHost = localHost.getCanonicalHostName();
+			} catch (UnknownHostException e) {
+				logger.fatal("Unable to resolve local host", e);
+			}
+
+			configHost = configHost.replace(
+					CONFIG_HOST_TOKEN_RESOLVED_LOCAL_HOST, resolvedLocalHost);
+		}
+
+		return configHost;
 	}
 }

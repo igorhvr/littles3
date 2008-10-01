@@ -16,6 +16,8 @@
 
 package com.jpeterson.littles3;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
@@ -606,5 +608,34 @@ public class S3ObjectRequestTest extends MockObjectTestCase {
 
 		assertEquals("Unexpected formatted date", "2007-07-19T14:50:33.000Z",
 				iso8601.format(cal.getTime()));
+	}
+
+	/**
+	 * Integration test to execute the algorithm for hostname resolution.
+	 */
+	public void xtest_localHost() {
+		String configHost;
+		String token = "$resolvedLocalHost$";
+
+		configHost = "foo:" + token + token + ":8080";
+
+		if (configHost.indexOf(token) >= 0) {
+			InetAddress localHost;
+			String resolvedLocalHost = "localhost";
+
+			try {
+				localHost = InetAddress.getLocalHost();
+				resolvedLocalHost = localHost.getCanonicalHostName();
+			} catch (UnknownHostException e) {
+				logger.fatal("Unable to resolve local host", e);
+			}
+
+			configHost = configHost.replace(token, resolvedLocalHost);
+		}
+
+		// this is machine dependent
+		System.out.println(">>>> configHost: " + configHost);
+		assertEquals("Unexpected hostname",
+				"foo:PEM32Z2RC1LIC.NCSP.PEROOT.COMPEM32Z2RC1LIC.NCSP.PEROOT.COM:8080", configHost);
 	}
 }
