@@ -6,7 +6,7 @@
   <!-- The Basics -->
   <groupId>com.jpeterson</groupId>
   <artifactId>littleS3-filesystem</artifactId>
-  <version>2.0.0</version>
+  <version>2.1.0</version>
   <packaging>jar</packaging>
   <dependencies>
     <dependency>

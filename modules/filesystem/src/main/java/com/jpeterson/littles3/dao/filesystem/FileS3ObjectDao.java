@@ -77,14 +77,6 @@ public class FileS3ObjectDao extends FileBase implements S3ObjectDao {
 		FileInputStream fis = null;
 		ObjectInputStream in = null;
 
-		// load key index
-		try {
-			keys = retrieveKeyIndex(bucket, true);
-		} catch (IOException e) {
-			throw new DataAccessResourceFailureException(
-					"Unable to load the key index for bucket: " + bucket, e);
-		}
-
 		relativeSerializedObjectFile = keys.get(key);
 		if (relativeSerializedObjectFile == null) {
 			throw new DataRetrievalFailureException("Could not find S3Object");
