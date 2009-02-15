@@ -16,6 +16,9 @@
 
 package com.jpeterson.littles3.bo;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.AccessControlException;
 import java.security.Permission;
@@ -37,12 +40,20 @@ public abstract class Resource implements Serializable {
 
 	private Acp acp;
 
-	protected Log logger;
+	transient protected Log logger;
 
 	/**
 	 * Basic constructor.
 	 */
 	public Resource() {
+		init();
+	}
+
+	/**
+	 * Initialization routines. Allows the <code>transient</code> to be
+	 * initialized when deserialized.
+	 */
+	private void init() {
 		logger = LogFactory.getLog(this.getClass());
 	}
 
@@ -111,5 +122,17 @@ public abstract class Resource implements Serializable {
 		Permission permission = new ResourcePermission(grantee,
 				ResourcePermission.ACTION_WRITE);
 		acp.checkPermission(permission);
+	}
+
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+	}
+
+	private void readObject(ObjectInputStream in) throws IOException,
+			ClassNotFoundException {
+		in.defaultReadObject();
+
+		// initialize transient variable(s)
+		init();
 	}
 }

@@ -1,26 +1,32 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <document>
-  <!-- find information about the format at:
-       http://maven.apache.org/reference/plugins/changes/ -->
-  
+  <!--
+    find information about the format at:
+    http://maven.apache.org/reference/plugins/changes/
+  -->
   <properties>
     <title>Changes</title>
     <author email="jesse@jpeterson.com">Jesse Peterson</author>
   </properties>
   <body>
+    <release version="2.1.0" date="2/14/09"
+      description="Make Resource serialization support non-serializable logging impelementations">
+      <action dev="peteje" type="update"> Update the Resource, Acp, and
+        S3Object serialization to correctly handle non-serializable
+        logging implementations.</action>
+    </release>
     <release version="1.0.0" date="upcoming" description="Initial release">
-      <action dev="peteje" type="add">
-        Initial release. Implement a storage engine that provides the Amazon S3 API.
-      </action>
+      <action dev="peteje" type="add"> Initial release. Implement a
+        storage engine that provides the Amazon S3 API.</action>
     </release>
-    
-    <!-- sample of link to team track. Need to use team track to find the "issue" from the CHGxxx -->
     <!--
-    <release version="0.0.1" date="example">
-      <action dev="peteje" type="fix" issue="113455">
-        Example of linking to CHG71754.
-      </action>
-    </release>
+      sample of link to team track. Need to use team track to find the
+      "issue" from the CHGxxx
+    -->
+    <!--
+      <release version="0.0.1" date="example"> <action dev="peteje"
+      type="fix" issue="113455"> Example of linking to CHG71754.
+      </action> </release>
     -->
   </body>
 </document>

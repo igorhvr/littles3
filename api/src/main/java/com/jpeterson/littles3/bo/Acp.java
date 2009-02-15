@@ -18,6 +18,8 @@ package com.jpeterson.littles3.bo;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.security.AccessControlException;
 import java.security.Permission;
@@ -48,7 +50,7 @@ public class Acp implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	protected Log logger;
+	transient protected Log logger;
 
 	private CanonicalUser owner;
 
@@ -95,6 +97,14 @@ public class Acp implements Serializable {
 	 * Basic constructor.
 	 */
 	public Acp() {
+		init();
+	}
+
+	/**
+	 * Initialization routines. Allows the <code>transient</code> to be
+	 * initialized when deserialized.
+	 */
+	private void init() {
 		logger = LogFactory.getLog(this.getClass());
 	}
 
@@ -487,5 +497,17 @@ public class Acp implements Serializable {
 		}
 
 		return acp;
+	}
+
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+	}
+
+	private void readObject(ObjectInputStream in) throws IOException,
+			ClassNotFoundException {
+		in.defaultReadObject();
+
+		// initialize transient variable(s)
+		init();
 	}
 }

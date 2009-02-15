@@ -63,8 +63,6 @@ public abstract class S3Object extends Resource {
 
 	protected long lastModified;
 
-	protected Log logger;
-
 	protected HashMap<String, List<String>> metadata = new HashMap<String, List<String>>();
 
 	/**
@@ -73,7 +71,6 @@ public abstract class S3Object extends Resource {
 	 */
 	public S3Object() {
 		super();
-		logger = LogFactory.getLog(this.getClass());
 	}
 
 	/**
