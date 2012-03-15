@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING/DTD BEAN/EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!--
+  - Sample application context definition.
+-->
+<beans>
+  <!--  ====== RESOURCE DEFINITIONS ====== -->
+  <bean id="reloadingStrategy"
+        class="org.apache.commons.configuration.reloading.FileChangedReloadingStrategy"
+        lazy-init="true" />
+
+  <bean id="configuration"
+        class="org.apache.commons.configuration.PropertiesConfiguration"
+        lazy-init="true">
+    <!-- <constructor-arg type="java.lang.String" value="C:/apps/apache-tomcat-5.5.23/settings/StorageEngine.properties" /> -->
+    <constructor-arg type="java.lang.String" value="StorageEngine.properties" />
+    <property name="reloadingStrategy" ref="reloadingStrategy"/>
+  </bean>
+
+  <!--  ====== BUSINESS OBJECT DEFINITIONS ====== -->
+ 
+  <bean id="staticUserDirectory"
+        class="com.jpeterson.littles3.bo.StaticUserDirectory"
+        lazy-init="true">
+  </bean>
+ 
+  <bean id="s3Authenticator"
+        class="com.jpeterson.littles3.bo.S3Authenticator"
+        lazy-init="true">
+    <property name="userDirectory" ref="staticUserDirectory"/>
+  </bean>
+
+  <bean id="authenticator"
+        class="com.jpeterson.littles3.bo.HackAuthenticator"
+        lazy-init="true">
+    <property name="authenticator" ref="s3Authenticator"/>
+  </bean>
+
+  <bean id="jeCentral"
+        class="com.jpeterson.littles3.dao.je.JeCentral"
+        lazy-init="true"
+		init-method="init"
+		destroy-method="destroy">
+    <property name="configuration" ref="configuration"/>
+  </bean>
+
+<!--  
+  <bean id="bucketDao"
+        class="com.jpeterson.littles3.dao.je.JeBucketDao"
+        lazy-init="true">
+    <property name="jeCentral" ref="jeCentral"/>
+  </bean>
+-->
+
+  <bean id="bucketDao"
+        class="com.jpeterson.littles3.dao.filesystem.FileBucketDao"
+        lazy-init="true">
+    <property name="configuration" ref="configuration"/>
+  </bean>
+
+<!--
+  <bean id="s3ObjectDao"
+        class="com.jpeterson.littles3.dao.je.JeS3ObjectDao"
+        lazy-init="true">
+    <property name="jeCentral" ref="jeCentral"/>
+  </bean>
+-->
+
+  <bean id="s3ObjectDao"
+        class="com.jpeterson.littles3.dao.filesystem.FileS3ObjectDao"
+        lazy-init="true">
+    <property name="configuration" ref="configuration"/>
+  </bean>
+
+  <bean id="storageService"
+        class="com.jpeterson.littles3.service.impl.FileStorageServiceImpl"
+        lazy-init="true">
+	<property name="bucketDao" ref="bucketDao"/>
+	<property name="s3ObjectDao" ref="s3ObjectDao"/>
+    <property name="configuration" ref="configuration"/>
+  </bean>
+</beans>
